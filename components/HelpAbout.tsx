@@ -9,7 +9,7 @@ export default function HelpAbout() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 p-3 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-600 transition-colors z-40"
+        className="fixed top-4 right-4 p-3 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-600 transition-colors z-40"
         aria-label="About this assistant"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,10 +39,11 @@ export default function HelpAbout() {
           <section>
             <h3 className="font-semibold text-gray-800 mb-2">What it does</h3>
             <ul className="list-disc list-inside space-y-1 text-gray-700 text-sm">
-              <li>Generates six competency-level questions for the same concept, aligned to the SOT scale (Not started, Emerging, Developing, Secure, Mastering, Extending)</li>
+              <li>Generates lesson designs with activities for three learning levels: Beginner, Intermediate, and Advanced</li>
+              <li>For each level (Beginner, Intermediate, Advanced), creates competency-aligned activities that cover the same core concept with varying depth and complexity</li>
               <li>Supports teacher refinements through an interactive chat interface</li>
-              <li>Exports question sets as JSON or Markdown</li>
-              <li>Personalizes questions based on student learning profiles, interests, and support needs</li>
+              <li>Exports lesson designs as JSON</li>
+              <li>Considers teacher context (class size, composition, time, materials) when designing activities</li>
             </ul>
           </section>
 
@@ -52,7 +53,7 @@ export default function HelpAbout() {
               <li>Grade students or assess their work</li>
               <li>Decide which competencies to teach or when to use them</li>
               <li>Store data by default (all data remains in your browser session)</li>
-              <li>Replace teacher judgment—always review and adapt questions before use</li>
+              <li>Replace teacher judgment—always review and adapt lesson designs before use</li>
             </ul>
           </section>
 
@@ -69,7 +70,7 @@ export default function HelpAbout() {
           <section>
             <h3 className="font-semibold text-gray-800 mb-2">Responsible Use</h3>
             <p className="text-gray-700 text-sm">
-              This tool is designed to support teachers in creating differentiated questions. Always review generated content for accuracy, age-appropriateness, and alignment with your curriculum before using with students.
+              This tool is designed to support teachers in creating lesson designs with differentiated activities. Always review generated content for accuracy, age-appropriateness, and alignment with your curriculum before using with students.
             </p>
           </section>
 

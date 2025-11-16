@@ -1,14 +1,38 @@
-export type QuestionLevelKey = "NS" | "E" | "D" | "S" | "M" | "Ex";
+export type QuestionLevelKey = "Beginner" | "Intermediate" | "Advanced";
 
 export interface QuestionItem {
   levelKey: QuestionLevelKey;
-  levelLabel: "Not started (E)" | "Emerging (E)" | "Developing (D)" | "Secure (S)" | "Mastering (M)" | "Extending (Ex)";
+  levelLabel: "Beginner" | "Intermediate" | "Advanced";
   question: string;
   rationale: string;
   formatHint?: string;
   realWorldContext?: string;
 }
 
+export interface LessonDesign {
+  topic: string;
+  competency: string;
+  learningObjective: string;
+  teacherContext: {
+    classSize?: string;
+    classComposition?: string;
+    timeAvailable?: string;
+    materialsAvailable?: string;
+    teachingIdeas?: string;
+    notes?: string;
+  };
+  teachingContent?: string;
+  items: QuestionItem[]; // Exactly 3, one per level
+  notesForTeacher?: string;
+  // HCAI: Provenance metadata
+  metadata?: {
+    model?: string;
+    generatedAt?: Date;
+    version?: number;
+  };
+}
+
+// Keep QuestionSet for backward compatibility if needed
 export interface QuestionSet {
   topic: string;
   competency: string;
@@ -19,7 +43,6 @@ export interface QuestionSet {
   };
   items: QuestionItem[];
   notesForTeacher?: string;
-  // HCAI: Provenance metadata
   metadata?: {
     model?: string;
     generatedAt?: Date;
@@ -43,7 +66,7 @@ export interface Student {
 }
 
 export interface Feedback {
-  questionSetId: string;
+  lessonDesignId: string;
   rating: number; // 1-5
   comment?: string;
   usedInClass?: boolean;
@@ -51,7 +74,7 @@ export interface Feedback {
 }
 
 export interface QuestionSetVersion {
-  questionSet: QuestionSet;
+  lessonDesign: LessonDesign;
   timestamp: Date;
   action: "generated" | "edited" | "regenerated" | "replaced";
 }
@@ -59,16 +82,25 @@ export interface QuestionSetVersion {
 export interface ChatSession {
   id: string;
   title: string;
-  topic: string;
+  subjectDomain: string;
   competency: string;
-  selectedStudentIds: string[];
+  learningObjective: string;
+  teacherContext: {
+    classSize?: string;
+    classComposition?: string;
+    timeAvailable?: string;
+    materialsAvailable?: string;
+    teachingIdeas?: string;
+    notes?: string;
+  };
+  teachingContent?: string;
   createdAt: Date;
   lastMessageAt: Date;
-  questionSets: QuestionSet[]; // Multiple question sets, one per student
+  lessonDesigns: LessonDesign[]; // Multiple lesson designs for the session
   history: ChatTurn[];
   // HCAI: Version history for undo/redo
-  versionHistory?: QuestionSetVersion[][]; // Array of versions per student
-  originalSets?: QuestionSet[]; // Original generated sets
+  versionHistory?: QuestionSetVersion[];
+  originalDesigns?: LessonDesign[]; // Original generated designs
   feedback?: Feedback[];
 }
 

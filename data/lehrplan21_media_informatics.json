@@ -1,0 +1,54 @@
+{
+    "competencies": [
+        {
+            "id": "MI_MEDIEN_1",
+            "name_de": "Orientierung und Verhalten in Medienwelten",
+            "name_en": "Orientation and Behaviour in Media Environments",
+            "focus_de": "Die Schülerinnen und Schüler können sich in der physischen Umwelt sowie in medialen und virtuellen Lebensräumen orientieren und sich darin entsprechend den Gesetzen, Regeln und Wertesystemen verhalten.",
+            "focus_en": "Pupils can orient themselves in physical, media and virtual environments and behave in accordance with laws, rules and values."
+        },
+        {
+            "id": "MI_MEDIEN_2",
+            "name_de": "Medien entschlüsseln und reflektieren",
+            "name_en": "Media Decoding and Reflection",
+            "focus_de": "Die Schülerinnen und Schüler können Medien und Medienbeiträge entschlüsseln, reflektieren und nutzen.",
+            "focus_en": "Pupils can interpret, reflect on and use media and media contributions."
+        },
+        {
+            "id": "MI_MEDIEN_3",
+            "name_de": "Medien produzieren und publizieren",
+            "name_en": "Media Production and Publishing",
+            "focus_de": "Die Schülerinnen und Schüler können Gedanken, Meinungen, Erfahrungen und Wissen in Medienbeiträge umsetzen und unter Einbezug der Gesetze, Regeln und Wertesysteme auch veröffentlichen.",
+            "focus_en": "Pupils can transform ideas, opinions, experiences and knowledge into media contributions and publish them, considering laws, rules, and values."
+        },
+        {
+            "id": "MI_MEDIEN_4",
+            "name_de": "Mit Medien kommunizieren und kooperieren",
+            "name_en": "Communicate and Cooperate Using Media",
+            "focus_de": "Die Schülerinnen und Schüler können Medien interaktiv nutzen sowie mit anderen kommunizieren und kooperieren.",
+            "focus_en": "Pupils can use media interactively and communicate and collaborate with others."
+        },
+        {
+            "id": "MI_INFORMATIK_1",
+            "name_de": "Daten strukturieren, organisieren und analysieren",
+            "name_en": "Structuring, Organising and Analysing Data",
+            "focus_de": "Die Schülerinnen und Schüler können Daten aus ihrer Umwelt darstellen, strukturieren und auswerten.",
+            "focus_en": "Pupils can represent, organise and evaluate data from their environment."
+        },
+        {
+            "id": "MI_INFORMATIK_2",
+            "name_de": "Problemlösen und Programmieren",
+            "name_en": "Problem Solving and Programming",
+            "focus_de": "Die Schülerinnen und Schüler können einfache Problemstellungen analysieren, mögliche Lösungsverfahren beschreiben und in Programmen umsetzen.",
+            "focus_en": "Pupils can analyse simple problems, describe possible solutions and implement them in programs."
+        },
+        {
+            "id": "MI_INFORMATIK_3",
+            "name_de": "Informationssysteme und Datensicherheit verstehen",
+            "name_en": "Understanding Information Systems and Data Security",
+            "focus_de": "Die Schülerinnen und Schüler verstehen Aufbau und Funktionsweise von informationsverarbeitenden Systemen und können Konzepte der sicheren Datenverarbeitung anwenden.",
+            "focus_en": "Pupils understand the structure and function of information processing systems and can apply data security concepts."
+        }
+    ]
+}
+
