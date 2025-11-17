@@ -559,17 +559,12 @@ Deliverable requirements:
           {sidebarCollapsed ? "›" : "‹"}
         </button>
         {/* App Name Header */}
-        <div className="p-4 border-b border-gray-200 bg-purple-50">
-          {sidebarCollapsed ? (
-            <div className="text-center">
-              <span className="text-xl font-bold text-purple-700">L</span>
-            </div>
-          ) : (
-            <>
-              <h1 className="text-xl font-bold text-purple-700">Lecture Design Assistant</h1>
-              <p className="text-xs text-purple-600 mt-1">Media and Computer Science</p>
-            </>
-          )}
+        <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-center">
+          <img
+            src="/tekko_logo.png"
+            alt="Tekko logo"
+            className="h-20 w-auto object-contain transition-all duration-300"
+          />
         </div>
         
         {/* History Section */}
