@@ -2,14 +2,20 @@
 
 import { useState } from "react";
 
-export default function HelpAbout() {
+interface HelpAboutProps {
+  variant?: "top-right" | "bottom-right";
+}
+
+export default function HelpAbout({ variant = "top-right" }: HelpAboutProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const buttonPosition =
+    variant === "bottom-right" ? "fixed bottom-4 right-4" : "fixed top-4 right-4";
 
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-4 right-4 p-3 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-600 transition-colors z-40"
+        className={`${buttonPosition} p-3 bg-purple-500 text-white rounded-full shadow-lg hover:bg-purple-600 transition-colors z-40`}
         aria-label="About this assistant"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

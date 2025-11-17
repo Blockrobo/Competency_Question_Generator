@@ -543,7 +543,7 @@ Deliverable requirements:
   return (
     <div className="flex h-screen bg-gray-50">
       {/* HCAI: Help/About modal */}
-      <HelpAbout />
+      <HelpAbout variant={activeSession ? "bottom-right" : "top-right"} />
 
       {/* Left Sidebar - History */}
       <div
