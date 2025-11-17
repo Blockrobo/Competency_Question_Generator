@@ -1,12 +1,16 @@
-export type QuestionLevelKey = "Beginner" | "Intermediate" | "Advanced";
-
-export interface QuestionItem {
-  levelKey: QuestionLevelKey;
-  levelLabel: "Beginner" | "Intermediate" | "Advanced";
-  question: string;
-  rationale: string;
-  formatHint?: string;
-  realWorldContext?: string;
+export interface LessonIdea {
+  levelKey: "Beginner" | "Intermediate" | "Advanced";
+  levelLabel?: "Beginner" | "Intermediate" | "Advanced";
+  title: string;
+  estimated_duration: string;
+  materials_needed: string[];
+  min_number_students: number;
+  max_number_students: number;
+  description: string;
+  position?: {
+    x: number;
+    y: number;
+  };
 }
 
 export interface LessonDesign {
@@ -22,27 +26,8 @@ export interface LessonDesign {
     notes?: string;
   };
   teachingContent?: string;
-  items: QuestionItem[]; // Exactly 3, one per level
-  notesForTeacher?: string;
+  ideas: LessonIdea[]; // Array of sticky-note lesson ideas
   // HCAI: Provenance metadata
-  metadata?: {
-    model?: string;
-    generatedAt?: Date;
-    version?: number;
-  };
-}
-
-// Keep QuestionSet for backward compatibility if needed
-export interface QuestionSet {
-  topic: string;
-  competency: string;
-  student: {
-    name: string;
-    learnerProfile?: string;
-    needsSupportWith?: string;
-  };
-  items: QuestionItem[];
-  notesForTeacher?: string;
   metadata?: {
     model?: string;
     generatedAt?: Date;

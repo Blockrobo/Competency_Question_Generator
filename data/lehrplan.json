@@ -1,0 +1,17 @@
+{
+  "subjectDomain": "Medien und Informatik",
+  "competencies": [
+    {
+      "code": "MI.1.1",
+      "title": "Example Competency 1",
+      "description": "Description of competency 1"
+    },
+    {
+      "code": "MI.1.2",
+      "title": "Example Competency 2",
+      "description": "Description of competency 2"
+    }
+  ],
+  "note": "Replace this with your actual lehrplan JSON file. Structure: array of competencies with code, title, and description fields."
+}
+

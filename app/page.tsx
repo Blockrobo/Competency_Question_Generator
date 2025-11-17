@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useRef, useEffect } from "react";
-import { ChatTurn, LessonDesign, ChatSession } from "@/types/questions";
+import { ChatTurn, LessonDesign, ChatSession, LessonIdea } from "@/types/questions";
 import HelpAbout from "@/components/HelpAbout";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import lehrplanData from "@/data/lehrplan21_media_informatics.json";
@@ -20,6 +20,139 @@ function formatTime(date: Date): string {
   return date.toLocaleDateString();
 }
 
+function normalizeIdeas(rawIdeas: any[]): LessonIdea[] {
+  if (!Array.isArray(rawIdeas)) return [];
+  const fallbackLevels: ("Beginner" | "Intermediate" | "Advanced")[] = ["Beginner", "Intermediate", "Advanced"];
+
+  return rawIdeas.slice(0, 3).map((idea, idx) => {
+    const rawMin = Number(idea?.min_number_students ?? 1);
+    const safeMin = Number.isFinite(rawMin) && rawMin > 0 ? Math.floor(rawMin) : 1;
+    const rawMax = Number(idea?.max_number_students ?? safeMin);
+    const safeMax =
+      Number.isFinite(rawMax) && rawMax >= safeMin ? Math.floor(rawMax) : Math.max(safeMin, 4);
+
+    const materialsArray = Array.isArray(idea?.materials_needed)
+      ? idea.materials_needed
+      : idea?.materials_needed
+      ? [idea.materials_needed]
+      : [];
+
+    return {
+      levelKey: (idea?.levelKey ?? fallbackLevels[idx]) as "Beginner" | "Intermediate" | "Advanced",
+      levelLabel: (idea?.levelLabel ?? idea?.levelKey ?? fallbackLevels[idx]) as
+        | "Beginner"
+        | "Intermediate"
+        | "Advanced",
+      title: idea?.title ?? `Idea ${idx + 1}`,
+      estimated_duration: idea?.estimated_duration ?? "45 minutes",
+      materials_needed: materialsArray.map((m: any) => String(m)),
+      min_number_students: safeMin,
+      max_number_students: safeMax,
+      description:
+        idea?.description ??
+        "Describe how students engage with the concept, how the teacher facilitates, and what evidence of learning appears.",
+      position: idea?.position,
+    };
+  });
+}
+
+function applyDefaultPositions(ideas: LessonIdea[]): LessonIdea[] {
+  const columnWidth = 260;
+  const rowHeight = 190;
+  const gap = 32;
+
+  return ideas.map((idea, idx) => ({
+    ...idea,
+    position: idea.position ?? {
+      x: (idx % 3) * (columnWidth + gap) + 16,
+      y: Math.floor(idx / 3) * (rowHeight + gap) + 16,
+    },
+  }));
+}
+
+function prepareLessonDesign(raw: LessonDesign): LessonDesign {
+  const normalizedIdeas = applyDefaultPositions(normalizeIdeas(raw.ideas || []));
+  return {
+    ...raw,
+    ideas: normalizedIdeas,
+  };
+}
+
+const demoLessonDesign: LessonDesign = prepareLessonDesign({
+  topic: "Media Remix & Perspective",
+  competency: "MI_MEDIEN_2",
+  learningObjective:
+    "Students analyze how media framing changes perception and remix short clips to highlight digital empathy.",
+  teacherContext: {
+    classSize: "Medium (16-25 students)",
+    classComposition: "Mixed ability",
+    timeAvailable: "90 minutes",
+    materialsAvailable: "Student tablets, projector, sticky notes, speakers",
+    teachingIdeas: "Connect to current online trends; let students critique examples they already know.",
+    notes: "Group students intentionally so every team has a confident presenter.",
+  },
+  teachingContent:
+    "Focus on decoding, remixing, and presenting short media artifacts that model respectful digital dialogue.",
+  ideas: [
+    {
+      levelKey: "Beginner",
+      levelLabel: "Beginner",
+      title: "Color-Coded Media Snapshots",
+      estimated_duration: "15 minutes",
+      materials_needed: ["Printed screenshots", "Colored sticky dots"],
+      min_number_students: 10,
+      max_number_students: 30,
+      description:
+        "Scatter printed social posts around the room. Students tag them with colored dots to signal how each post might make different audiences feel. Facilitator prompts a lightning debrief on surprising reactions and how tone shifts perception.",
+      position: { x: 16, y: 16 },
+    },
+    {
+      levelKey: "Intermediate",
+      levelLabel: "Intermediate",
+      title: "Two-Voice Remix",
+      estimated_duration: "25 minutes",
+      materials_needed: ["Tablets or laptops", "Free audio editing app"],
+      min_number_students: 4,
+      max_number_students: 24,
+      description:
+        "Pairs record a short narration that retells the same scenario twice: once as an inflamed, clickbait perspective and once as a calm, empathetic voice. Classmates guess which version would build trust online and annotate why.",
+      position: { x: 304, y: 16 },
+    },
+    {
+      levelKey: "Advanced",
+      levelLabel: "Advanced",
+      title: "Sticky-Note Argument Map",
+      estimated_duration: "20 minutes",
+      materials_needed: ["Large poster paper", "Sticky notes", "Markers"],
+      min_number_students: 8,
+      max_number_students: 28,
+      description:
+        "Small groups map a controversial topic on poster paper. Each sticky note must cite a media example plus the intended audience reaction. Students reorganize notes to show how remixing order/phrasing changes the narrative arc.",
+      position: { x: 592, y: 16 },
+    },
+  ],
+  metadata: {
+    model: "demo",
+    generatedAt: new Date(),
+    version: 0,
+  },
+});
+
+const demoSession: ChatSession = {
+  id: "demo-session",
+  title: "MI_MEDIEN_2 - Media Remix Canvas",
+  subjectDomain: "Media and Computer Science",
+  competency: "MI_MEDIEN_2",
+  learningObjective: demoLessonDesign.learningObjective,
+  teacherContext: demoLessonDesign.teacherContext,
+  teachingContent: demoLessonDesign.teachingContent,
+  createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
+  lastMessageAt: new Date(Date.now() - 1000 * 60 * 30),
+  lessonDesigns: [demoLessonDesign],
+  history: [],
+  originalDesigns: [demoLessonDesign],
+};
+
 export default function Page() {
   // Chat sessions
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -37,6 +170,29 @@ export default function Page() {
   const [teachingIdeas, setTeachingIdeas] = useState("");
   const [otherNotes, setOtherNotes] = useState("");
   const [teachingInput, setTeachingInput] = useState("");
+  const [hasLoadedDemo, setHasLoadedDemo] = useState(false);
+
+  const canvasViewportRef = useRef<HTMLDivElement>(null);
+  const [canvasScale, setCanvasScale] = useState(1);
+  const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef({ x: 0, y: 0 });
+  const panOffsetRef = useRef({ x: 0, y: 0 });
+  const MIN_SCALE = 0.5;
+  const MAX_SCALE = 2;
+  const SCALE_STEP = 0.1;
+
+  function getWorldPosition(clientX: number, clientY: number) {
+    const viewport = canvasViewportRef.current;
+    if (!viewport) return { x: 0, y: 0 };
+    const rect = viewport.getBoundingClientRect();
+    const localX = clientX - rect.left;
+    const localY = clientY - rect.top;
+    return {
+      x: (localX - canvasOffset.x) / canvasScale,
+      y: (localY - canvasOffset.y) / canvasScale,
+    };
+  }
 
   const [refine, setRefine] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,7 +200,6 @@ export default function Page() {
   // HCAI: Additional state
   const [dontKeepHistory, setDontKeepHistory] = useState(true);
   const [lastError, setLastError] = useState<{ raw?: string; parseError?: string } | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Step-by-step wizard state
   const [currentStep, setCurrentStep] = useState(1);
@@ -53,6 +208,11 @@ export default function Page() {
   const activeSession = useMemo(() => {
     return sessions.find((s) => s.id === activeSessionId) || null;
   }, [sessions, activeSessionId]);
+
+  const currentLessonDesign = useMemo(() => {
+    if (!activeSession || activeSession.lessonDesigns.length === 0) return null;
+    return activeSession.lessonDesigns[activeSession.lessonDesigns.length - 1];
+  }, [activeSession]);
 
   // Get final class size (dropdown or custom number)
   const finalClassSize = useMemo(() => {
@@ -84,12 +244,12 @@ Teacher Context:
 
 Teaching Input/Content: ${teachingInput || "Not specified"}
 
-Remember:
-- Generate exactly THREE levels: Beginner, Intermediate, and Advanced
-- Same core concept across all three levels; vary depth, complexity, and independence
-- Beginner: descriptive knowledge checks, concrete activities
-- Intermediate: application with some guidance
-- Advanced: open-ended, initiative-driven questions and projects
+Deliverable requirements:
+- Return exactly three lesson ideas in the "ideas" array: Beginner, Intermediate, Advanced (in that order).
+- Each idea must include: levelKey, levelLabel, title, estimated_duration, materials_needed (array), min_number_students, max_number_students, description.
+- Beginner = highly scaffolded concrete activity; Intermediate = balanced guidance and independence; Advanced = transfer/creative application with minimal scaffolds.
+- Make every description 3-4 sentences describing student actions, teacher moves, and connection to the competency.
+- Respect the teacher context and available materials; suggest low-tech alternatives if needed.
 `;
 
     try {
@@ -102,13 +262,15 @@ Remember:
 
       if (json.data) {
         const lessonDesign = json.data as LessonDesign;
-        // Add metadata for provenance
-        lessonDesign.metadata = {
-          model: json.metadata?.model || "unknown",
-          generatedAt: json.metadata?.generatedAt ? new Date(json.metadata.generatedAt) : new Date(),
-          version: 1,
+        const withMetadata: LessonDesign = {
+          ...lessonDesign,
+          metadata: {
+            model: json.metadata?.model || "unknown",
+            generatedAt: json.metadata?.generatedAt ? new Date(json.metadata.generatedAt) : new Date(),
+            version: 1,
+          },
         };
-        return lessonDesign;
+        return prepareLessonDesign(withMetadata);
       }
       
       // Handle error case
@@ -193,7 +355,9 @@ Remember:
     
     const refineMessage: ChatTurn = { role: "user", content: msg, timestamp: new Date() };
     
-    generateLessonDesign(activeSession.history).then((lessonDesign) => {
+    const historyWithRefinement = [...activeSession.history, refineMessage];
+
+    generateLessonDesign(historyWithRefinement).then((lessonDesign) => {
       if (lessonDesign) {
         const assistantTurn: ChatTurn = { role: "assistant", content: JSON.stringify(lessonDesign), timestamp: new Date() };
         
@@ -289,10 +453,73 @@ Remember:
     }
   }
 
-  // HCAI: Scroll to bottom on new messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeSession?.history]);
+  function handleIdeaDrag(index: number, position: { x: number; y: number }) {
+    if (!activeSessionId) return;
+    setSessions((prev) =>
+      prev.map((session) => {
+        if (session.id !== activeSessionId || session.lessonDesigns.length === 0) {
+          return session;
+        }
+        const targetIdx = session.lessonDesigns.length - 1;
+        const updatedDesigns = session.lessonDesigns.map((design, designIdx) => {
+          if (designIdx !== targetIdx || !design.ideas) {
+            return design;
+          }
+          return {
+            ...design,
+            ideas: design.ideas.map((idea, ideaIdx) =>
+              ideaIdx === index ? { ...idea, position } : idea
+            ),
+          };
+        });
+        return { ...session, lessonDesigns: updatedDesigns };
+      })
+    );
+  }
+
+  function handleCanvasWheel(e: React.WheelEvent<HTMLDivElement>) {
+    if (!canvasViewportRef.current) return;
+    e.preventDefault();
+    const rect = canvasViewportRef.current.getBoundingClientRect();
+    const cursorX = e.clientX - rect.left;
+    const cursorY = e.clientY - rect.top;
+    const worldBefore = {
+      x: (cursorX - canvasOffset.x) / canvasScale,
+      y: (cursorY - canvasOffset.y) / canvasScale,
+    };
+    const delta = e.deltaY < 0 ? 1 + SCALE_STEP : 1 - SCALE_STEP;
+    const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, canvasScale * delta));
+    setCanvasScale(nextScale);
+    setCanvasOffset({
+      x: cursorX - worldBefore.x * nextScale,
+      y: cursorY - worldBefore.y * nextScale,
+    });
+  }
+
+  function handleCanvasPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.button !== 0) return;
+    if (e.target !== e.currentTarget) return;
+    setIsPanning(true);
+    panStartRef.current = { x: e.clientX, y: e.clientY };
+    panOffsetRef.current = { ...canvasOffset };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function handleCanvasPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isPanning) return;
+    const deltaX = e.clientX - panStartRef.current.x;
+    const deltaY = e.clientY - panStartRef.current.y;
+    setCanvasOffset({
+      x: panOffsetRef.current.x + deltaX,
+      y: panOffsetRef.current.y + deltaY,
+    });
+  }
+
+  function handleCanvasPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isPanning) return;
+    setIsPanning(false);
+    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+  }
 
   // Load competencies from lehrplan - use direct import
   const competencies = useMemo(() => {
@@ -303,6 +530,14 @@ Remember:
       return [];
     }
   }, []);
+
+  useEffect(() => {
+    if (!hasLoadedDemo && sessions.length === 0) {
+      setSessions([demoSession]);
+      setActiveSessionId("demo-session");
+      setHasLoadedDemo(true);
+    }
+  }, [hasLoadedDemo, sessions.length]);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -323,54 +558,62 @@ Remember:
             <h2 className="text-lg font-semibold text-gray-800">History</h2>
           </div>
           <div className="flex-1 overflow-y-auto max-h-64">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                onClick={() => {
-                  setActiveSessionId(session.id);
-                  setCompetency(session.competency);
-                  setLearningObjective(session.learningObjective || "");
-                  // Restore other fields for editing if needed, or just display
-                  setClassSize(session.teacherContext?.classSize?.split(' ')[0] || ""); // Simplified for now
-                  setClassComposition(session.teacherContext?.classComposition || "");
-                  setTimeAvailable(session.teacherContext?.timeAvailable || "");
-                  setMaterialsAvailable(session.teacherContext?.materialsAvailable || "");
-                  setTeachingIdeas(session.teacherContext?.teachingIdeas || "");
-                  setOtherNotes(session.teacherContext?.notes || "");
-                  setTeachingInput(session.teachingContent || "");
-                  setCurrentStep(1); // Reset to first step when loading history
-                }}
-                className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors relative group ${
-                  activeSessionId === session.id ? "bg-purple-50 border-l-4 border-l-purple-500" : ""
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
-                    {session.lessonDesigns.length > 0 ? session.lessonDesigns.length : "?"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-gray-800 text-sm truncate">{session.title}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 flex-shrink-0">
-                          {formatTime(session.lastMessageAt)}
-                        </span>
-                        <button
-                          onClick={(e) => deleteSession(session.id, e)}
-                          className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-xs px-1 transition-opacity"
-                          title="Delete chat"
-                        >
-                          ×
-                        </button>
-                      </div>
+            {sessions.map((session) => {
+              const latestIdeaCount =
+                session.lessonDesigns.length > 0
+                  ? session.lessonDesigns[session.lessonDesigns.length - 1]?.ideas?.length ?? 0
+                  : 0;
+              return (
+                <div
+                  key={session.id}
+                  onClick={() => {
+                    setActiveSessionId(session.id);
+                    setCompetency(session.competency);
+                    setLearningObjective(session.learningObjective || "");
+                    // Restore other fields for editing if needed, or just display
+                    setClassSize(session.teacherContext?.classSize?.split(" ")[0] || ""); // Simplified for now
+                    setClassComposition(session.teacherContext?.classComposition || "");
+                    setTimeAvailable(session.teacherContext?.timeAvailable || "");
+                    setMaterialsAvailable(session.teacherContext?.materialsAvailable || "");
+                    setTeachingIdeas(session.teacherContext?.teachingIdeas || "");
+                    setOtherNotes(session.teacherContext?.notes || "");
+                    setTeachingInput(session.teachingContent || "");
+                    setCurrentStep(1); // Reset to first step when loading history
+                  }}
+                  className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors relative group ${
+                    activeSessionId === session.id ? "bg-purple-50 border-l-4 border-l-purple-500" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
+                      {latestIdeaCount > 0 ? latestIdeaCount : "?"}
                     </div>
-                    <p className="text-xs text-gray-500 truncate">
-                      {session.lessonDesigns.length > 0 ? `Generated ${session.lessonDesigns.length} lesson idea${session.lessonDesigns.length > 1 ? "s" : ""}` : "New conversation"}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="font-medium text-gray-800 text-sm truncate">{session.title}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500 flex-shrink-0">
+                            {formatTime(session.lastMessageAt)}
+                          </span>
+                          <button
+                            onClick={(e) => deleteSession(session.id, e)}
+                            className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 text-xs px-1 transition-opacity"
+                            title="Delete chat"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">
+                        {latestIdeaCount > 0
+                          ? `Generated ${latestIdeaCount} lesson idea${latestIdeaCount === 1 ? "" : "s"}`
+                          : "New canvas"}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {sessions.length === 0 && (
               <div className="p-4 text-center text-gray-400 text-xs">
                 No conversations yet.
@@ -389,14 +632,14 @@ Remember:
         </div>
       </div>
 
-      {/* Right Panel - Chat Interface or Wizard */}
+      {/* Right Panel - Canvas or Wizard */}
       {activeSessionId && activeSession ? (
-        <div className="flex-1 flex flex-col bg-white">
-          {/* Chat Header - Fixed at top */}
+        <div className="flex-1 flex flex-col bg-gray-100">
+          {/* Canvas Header */}
           <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-purple-500 flex items-center justify-center text-white font-medium">
-                {activeSession.lessonDesigns.length}
+                {currentLessonDesign?.ideas.length ?? 0}
               </div>
               <div>
                 <h3 className="font-semibold text-gray-800">{activeSession.title}</h3>
@@ -405,161 +648,57 @@ Remember:
                 </p>
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => currentLessonDesign && copy(JSON.stringify(currentLessonDesign, null, 2))}
+                disabled={!currentLessonDesign}
+                className="text-xs px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                Copy JSON
+              </button>
+              <button
+                onClick={() => currentLessonDesign && downloadJson(currentLessonDesign)}
+                disabled={!currentLessonDesign}
+                className="text-xs px-3 py-1 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                Download JSON
+              </button>
+            </div>
           </div>
 
-          {/* Chat Messages Area - Scrollable middle section */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50" role="log" aria-live="polite" aria-atomic="false">
-            <div className="max-w-4xl mx-auto space-y-4">
-              {/* Show history if available */}
-              {activeSession.history.length > 0 && activeSession.history.map((turn, idx) => {
-                if (turn.role === "user") {
-                  return (
-                    <div key={idx} className="flex justify-end">
-                      <div className="bg-purple-500 text-white rounded-2xl rounded-tr-sm px-4 py-2 max-w-[70%] shadow-sm">
-                        <p className="text-sm whitespace-pre-wrap">{turn.content}</p>
-                        {turn.timestamp && (
-                          <p className="text-xs text-purple-100 mt-1">
-                            {turn.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                } else {
-                  try {
-                    const lessonDesign = JSON.parse(turn.content) as LessonDesign;
-                    return (
-                      <div key={idx} className="flex justify-start">
-                        <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm border border-gray-200">
-                          <div className="mb-3">
-                            <h4 className="font-semibold text-gray-800 mb-2">
-                              {lessonDesign.topic} — {lessonDesign.competency}
-                            </h4>
-                            <p className="text-sm text-gray-600 mb-1">
-                              <strong>Learning Objective:</strong> {lessonDesign.learningObjective}
-                            </p>
-                            {/* HCAI: Provenance info */}
-                            {lessonDesign.metadata && (
-                              <div className="mb-3 text-xs text-gray-500">
-                                <span>Model-generated</span>
-                                {lessonDesign.metadata.model && (
-                                  <span> • {lessonDesign.metadata.model}</span>
-                                )}
-                                {lessonDesign.metadata.generatedAt && (
-                                  <span> • {new Date(lessonDesign.metadata.generatedAt).toLocaleString()}</span>
-                                )}
-                              </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 mt-3">
-                              {lessonDesign.items.map((item) => (
-                                <div key={item.levelKey} className="border border-gray-200 rounded-lg p-3 bg-gray-50 relative">
-                                  <div className="text-xs font-semibold text-purple-600 mb-1">{item.levelLabel}</div>
-                                  <p className="text-sm text-gray-800 mb-2">{item.question}</p>
-                                  <p className="text-xs text-gray-600">Rationale: {item.rationale}</p>
-                                </div>
-                              ))}
-                            </div>
-
-                            <div className="flex gap-2 flex-wrap">
-                              <button
-                                onClick={() => copy(JSON.stringify(lessonDesign, null, 2))}
-                                className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                              >
-                                Copy JSON
-                              </button>
-                              <button
-                                onClick={() => downloadJson(lessonDesign)}
-                                className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                              >
-                                Download JSON
-                              </button>
-                            </div>
-                          </div>
-                          {turn.timestamp && (
-                            <p className="text-xs text-gray-400 mt-2">
-                              {turn.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  } catch {
-                    return (
-                      <div key={idx} className="flex justify-start">
-                        <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-2 max-w-[70%] shadow-sm border border-gray-200">
-                          <p className="text-sm text-gray-800 whitespace-pre-wrap">{turn.content}</p>
-                          {turn.timestamp && (
-                            <p className="text-xs text-gray-400 mt-1">
-                              {turn.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-                }
-              })}
-
-              {/* Show lesson designs directly if history is empty but designs exist */}
-              {activeSession.history.length === 0 && activeSession.lessonDesigns.length > 0 && activeSession.lessonDesigns.map((lessonDesign, idx) => (
-                <div key={idx} className="flex justify-start">
-                  <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 max-w-[85%] shadow-sm border border-gray-200">
-                    <div className="mb-3">
-                      <h4 className="font-semibold text-gray-800 mb-2">
-                        {lessonDesign.topic || activeSession.competency} — {lessonDesign.competency || activeSession.competency}
-                      </h4>
-                      <p className="text-sm text-gray-600 mb-1">
-                        <strong>Learning Objective:</strong> {lessonDesign.learningObjective || activeSession.learningObjective}
-                      </p>
-                      {/* HCAI: Provenance info */}
-                      {lessonDesign.metadata && (
-                        <div className="mb-3 text-xs text-gray-500">
-                          <span>Model-generated</span>
-                          {lessonDesign.metadata.model && (
-                            <span> • {lessonDesign.metadata.model}</span>
-                          )}
-                          {lessonDesign.metadata.generatedAt && (
-                            <span> • {new Date(lessonDesign.metadata.generatedAt).toLocaleString()}</span>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 mt-3">
-                        {lessonDesign.items.map((item) => (
-                          <div key={item.levelKey} className="border border-gray-200 rounded-lg p-3 bg-gray-50 relative">
-                            <div className="text-xs font-semibold text-purple-600 mb-1">{item.levelLabel}</div>
-                            <p className="text-sm text-gray-800 mb-2">{item.question}</p>
-                            <p className="text-xs text-gray-600">Rationale: {item.rationale}</p>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="flex gap-2 flex-wrap">
-                        <button
-                          onClick={() => copy(JSON.stringify(lessonDesign, null, 2))}
-                          className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                          Copy JSON
-                        </button>
-                        <button
-                          onClick={() => downloadJson(lessonDesign)}
-                          className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                        >
-                          Download JSON
-                        </button>
-                      </div>
-                    </div>
-                    {lessonDesign.metadata?.generatedAt && (
-                      <p className="text-xs text-gray-400 mt-2">
-                        {new Date(lessonDesign.metadata.generatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {lastError && (
+          {/* Context summary */}
+          <div className="border-b border-gray-200 bg-white">
+            <div className="max-w-5xl mx-auto p-4 grid gap-4 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <p className="text-xs uppercase text-gray-500">Learning objective</p>
+                <p className="text-sm text-gray-800 mt-1">{activeSession.learningObjective || "Not specified"}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-gray-500">Time available</p>
+                <p className="text-sm text-gray-800 mt-1">{activeSession.teacherContext.timeAvailable || "Not specified"}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-gray-500">Class size</p>
+                <p className="text-sm text-gray-800 mt-1">
+                  {activeSession.teacherContext.classSize || "Not specified"}
+                  {activeSession.teacherContext.classComposition ? ` • ${activeSession.teacherContext.classComposition}` : ""}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-gray-500">Materials</p>
+                <p className="text-sm text-gray-800 mt-1">
+                  {activeSession.teacherContext.materialsAvailable || "Not specified"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-gray-500">Teacher ideas / notes</p>
+                <p className="text-sm text-gray-800 mt-1">
+                  {activeSession.teacherContext.teachingIdeas || activeSession.teacherContext.notes || "None provided"}
+                </p>
+              </div>
+            </div>
+            {lastError && (
+              <div className="max-w-5xl mx-auto px-4 pb-4">
                 <ErrorDisplay
                   rawOutput={lastError.raw}
                   parseError={lastError.parseError}
@@ -575,49 +714,97 @@ Remember:
                     setLastError(null);
                   }}
                 />
-              )}
+              </div>
+            )}
+          </div>
 
+          {/* Canvas Area */}
+          <div className="flex-1 overflow-hidden">
+            <div
+              ref={canvasViewportRef}
+              className={`relative w-full h-full ${
+                isPanning ? "cursor-grabbing" : "cursor-grab"
+              }`}
+              onWheel={handleCanvasWheel}
+              onPointerDown={handleCanvasPointerDown}
+              onPointerMove={handleCanvasPointerMove}
+              onPointerUp={handleCanvasPointerUp}
+              onPointerLeave={handleCanvasPointerUp}
+              style={{
+                backgroundColor: "#f8fafc",
+                backgroundImage:
+                  "linear-gradient(0deg, rgba(148,163,184,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.25) 1px, transparent 1px)",
+                backgroundSize: `${120 * canvasScale}px ${120 * canvasScale}px`,
+                backgroundPosition: `${((canvasOffset.x % (120 * canvasScale)) + (120 * canvasScale)) % (120 * canvasScale)}px ${((canvasOffset.y % (120 * canvasScale)) + (120 * canvasScale)) % (120 * canvasScale)}px`,
+              }}
+            >
+              <div
+                className="absolute"
+                style={{
+                  width: 5000,
+                  height: 3000,
+                  transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px) scale(${canvasScale})`,
+                  transformOrigin: "0 0",
+                }}
+              >
+                {currentLessonDesign && currentLessonDesign.ideas.length > 0 ? (
+                  currentLessonDesign.ideas.map((idea, idx) => (
+                    <StickyNote
+                      key={idx}
+                      idea={idea}
+                      index={idx}
+                      onDrag={handleIdeaDrag}
+                      getWorldPosition={getWorldPosition}
+                    />
+                  ))
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                    Generate a lesson to populate this canvas with ideas.
+                  </div>
+                )}
+              </div>
+              <div className="absolute top-4 right-4 text-xs text-gray-600 bg-white/80 px-3 py-1 rounded-full shadow">
+                Scroll to zoom • Drag empty canvas to pan • Drag notes to rearrange
+              </div>
               {loading && (
-                <div className="flex justify-start">
-                  <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-2 shadow-sm border border-gray-200">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
-                    </div>
+                <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
+                  <div className="flex gap-2 text-sm text-gray-600">
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                    <span className="ml-2">Generating ideas...</span>
                   </div>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
           </div>
 
-          {/* Chat Input Area - Fixed at bottom */}
+          {/* Refinement */}
           <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex gap-2 items-end">
+            <div className="max-w-5xl mx-auto">
+              <label htmlFor="refine-input" className="text-xs uppercase text-gray-500 mb-1 block">
+                Need different ideas?
+              </label>
+              <div className="flex gap-2">
                 <input
+                  id="refine-input"
                   className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder='Type your message to refine the lesson design...'
+                  placeholder="Ask for different grouping, materials, tone..."
                   value={refine}
                   onChange={(e) => setRefine(e.target.value)}
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
                       onRefine();
                     }
                   }}
-                  aria-label="Chat input"
                 />
                 <button
                   onClick={onRefine}
                   disabled={loading || !refine.trim()}
-                  className="p-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  aria-label="Send message"
+                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
+                  Regenerate
                 </button>
               </div>
             </div>
@@ -990,6 +1177,93 @@ Remember:
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+interface StickyNoteProps {
+  idea: LessonIdea;
+  index: number;
+  onDrag: (index: number, position: { x: number; y: number }) => void;
+  getWorldPosition: (clientX: number, clientY: number) => { x: number; y: number };
+}
+
+function StickyNote({ idea, index, onDrag, getWorldPosition }: StickyNoteProps) {
+  const noteRef = useRef<HTMLDivElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const offsetRef = useRef({ x: 0, y: 0 });
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.stopPropagation();
+    e.preventDefault();
+
+    const worldPoint = getWorldPosition(e.clientX, e.clientY);
+    offsetRef.current = {
+      x: worldPoint.x - (idea.position?.x ?? 0),
+      y: worldPoint.y - (idea.position?.y ?? 0),
+    };
+
+    const originalUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
+    setDragging(true);
+
+    const handleMove = (ev: PointerEvent) => {
+      const world = getWorldPosition(ev.clientX, ev.clientY);
+      onDrag(index, {
+        x: world.x - offsetRef.current.x,
+        y: world.y - offsetRef.current.y,
+      });
+    };
+
+    const handleUp = () => {
+      setDragging(false);
+      document.body.style.userSelect = originalUserSelect;
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+    };
+
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleUp);
+  };
+
+  const materials =
+    idea.materials_needed && idea.materials_needed.length > 0
+      ? idea.materials_needed
+      : ["No special materials"];
+
+  return (
+    <div
+      ref={noteRef}
+      className={`absolute w-64 bg-yellow-50 border border-yellow-200 rounded-2xl shadow-lg p-4 cursor-grab transition-shadow ${
+        dragging ? "ring-2 ring-purple-400 cursor-grabbing" : "hover:shadow-xl"
+      }`}
+      style={{ left: idea.position?.x ?? 0, top: idea.position?.y ?? 0 }}
+      onPointerDown={handlePointerDown}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-xs uppercase text-amber-700 tracking-wide">Lesson idea</p>
+        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-purple-700 bg-purple-100">
+          {idea.levelLabel || idea.levelKey}
+        </span>
+      </div>
+      <h4 className="text-lg font-semibold text-gray-900 mb-2">{idea.title}</h4>
+      <div className="text-xs text-gray-600 space-y-1 mb-3">
+        <p>
+          <span className="font-semibold">Duration:</span> {idea.estimated_duration}
+        </p>
+        <p>
+          <span className="font-semibold">Group size:</span>{" "}
+          {idea.min_number_students}–{idea.max_number_students} students
+        </p>
+        <p className="font-semibold">Materials:</p>
+        <ul className="list-disc list-inside text-gray-700 space-y-0.5">
+          {materials.map((item, idx) => (
+            <li key={idx}>{item}</li>
+          ))}
+        </ul>
+      </div>
+      <p className="text-sm text-gray-800 whitespace-pre-line leading-snug">{idea.description}</p>
     </div>
   );
 }
