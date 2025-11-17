@@ -1,0 +1,53 @@
+{
+  "competencies": [
+    {
+      "id": "MI_MEDIEN_1",
+      "name": "Orientation and Behaviour in Media Environments",
+      "focus": "Pupils can orient themselves in physical, media and virtual environments and behave in accordance with laws, rules and values.",
+      "cycles": ["1", "2", "3"],
+      "domain": "media"
+    },
+    {
+      "id": "MI_MEDIEN_2",
+      "name": "Media Decoding and Reflection",
+      "focus": "Pupils can interpret, reflect on and use media and media contributions.",
+      "cycles": ["1", "2", "3"],
+      "domain": "media"
+    },
+    {
+      "id": "MI_MEDIEN_3",
+      "name": "Media Production and Publishing",
+      "focus": "Pupils can transform ideas, opinions, experiences and knowledge into media contributions and publish them, considering laws, rules, and values.",
+      "cycles": ["2", "3"],
+      "domain": "media"
+    },
+    {
+      "id": "MI_MEDIEN_4",
+      "name": "Communicate and Cooperate Using Media",
+      "focus": "Pupils can use media interactively and communicate and collaborate with others.",
+      "cycles": ["1", "2", "3"],
+      "domain": "media"
+    },
+    {
+      "id": "MI_INFORMATIK_1",
+      "name": "Structuring, Organising and Analysing Data",
+      "focus": "Pupils can represent, organise and evaluate data from their environment.",
+      "cycles": ["2", "3"],
+      "domain": "informatics"
+    },
+    {
+      "id": "MI_INFORMATIK_2",
+      "name": "Problem Solving and Programming",
+      "focus": "Pupils can analyse simple problems, describe possible solutions and implement them in programs.",
+      "cycles": ["2", "3"],
+      "domain": "informatics"
+    },
+    {
+      "id": "MI_INFORMATIK_3",
+      "name": "Information Systems and Security",
+      "focus": "Pupils understand the structure and function of information processing systems and can apply data security concepts.",
+      "cycles": ["2", "3"],
+      "domain": "informatics"
+    }
+  ]
+}
