@@ -157,6 +157,7 @@ export default function Page() {
   // Chat sessions
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   // Form inputs
   const [subjectDomain] = useState("Media and Computer Science"); // Fixed
@@ -545,15 +546,34 @@ Deliverable requirements:
       <HelpAbout />
 
       {/* Left Sidebar - History */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div
+        className={`relative bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${
+          sidebarCollapsed ? "w-14" : "w-80"
+        }`}
+      >
+        <button
+          onClick={() => setSidebarCollapsed((prev) => !prev)}
+          className="absolute top-1/2 -right-3 z-10 w-6 h-6 rounded-full bg-white border border-gray-300 shadow flex items-center justify-center text-xs text-gray-600 -translate-y-1/2"
+          aria-label={sidebarCollapsed ? "Expand history" : "Collapse history"}
+        >
+          {sidebarCollapsed ? "›" : "‹"}
+        </button>
         {/* App Name Header */}
         <div className="p-4 border-b border-gray-200 bg-purple-50">
-          <h1 className="text-xl font-bold text-purple-700">Lecture Design Assistant</h1>
-          <p className="text-xs text-purple-600 mt-1">Media and Computer Science</p>
+          {sidebarCollapsed ? (
+            <div className="text-center">
+              <span className="text-xl font-bold text-purple-700">L</span>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-xl font-bold text-purple-700">Lecture Design Assistant</h1>
+              <p className="text-xs text-purple-600 mt-1">Media and Computer Science</p>
+            </>
+          )}
         </div>
         
         {/* History Section */}
-        <div className="flex-1 overflow-y-auto">
+        <div className={`flex-1 overflow-y-auto ${sidebarCollapsed ? "hidden" : "block"}`}>
           <div className="p-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-800">History</h2>
           </div>
@@ -622,14 +642,16 @@ Deliverable requirements:
           </div>
         </div>
 
-        <div className="p-4 border-t border-gray-200">
-          <button
-            onClick={startNewChat}
-            className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium"
-          >
-            + New Lesson Design
-          </button>
-        </div>
+        {!sidebarCollapsed && (
+          <div className="p-4 border-t border-gray-200">
+            <button
+              onClick={startNewChat}
+              className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium"
+            >
+              + New Lesson Design
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Right Panel - Canvas or Wizard */}
