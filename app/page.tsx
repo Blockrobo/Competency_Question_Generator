@@ -1,9 +1,15 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ChatTurn, LessonDesign, ChatSession, LessonIdea } from "@/types/questions";
 import HelpAbout from "@/components/HelpAbout";
 import ErrorDisplay from "@/components/ErrorDisplay";
+import LessonCanvas from "@/components/LessonCanvas";
+import {
+  prepareLessonDesign,
+  mapActivitiesToLessonIdeas,
+  mapLessonIdeasToStickyNotes,
+} from "@/lib/lessonIdeas";
 import lehrplanData from "@/data/lehrplan21_media_informatics.json";
 
 function formatTime(date: Date): string {
@@ -18,64 +24,6 @@ function formatTime(date: Date): string {
   if (hours < 24) return `${hours}h ago`;
   if (days < 7) return `${days}d ago`;
   return date.toLocaleDateString();
-}
-
-function normalizeIdeas(rawIdeas: any[]): LessonIdea[] {
-  if (!Array.isArray(rawIdeas)) return [];
-  const fallbackLevels: ("Beginner" | "Intermediate" | "Advanced")[] = ["Beginner", "Intermediate", "Advanced"];
-
-  return rawIdeas.slice(0, 3).map((idea, idx) => {
-    const rawMin = Number(idea?.min_number_students ?? 1);
-    const safeMin = Number.isFinite(rawMin) && rawMin > 0 ? Math.floor(rawMin) : 1;
-    const rawMax = Number(idea?.max_number_students ?? safeMin);
-    const safeMax =
-      Number.isFinite(rawMax) && rawMax >= safeMin ? Math.floor(rawMax) : Math.max(safeMin, 4);
-
-    const materialsArray = Array.isArray(idea?.materials_needed)
-      ? idea.materials_needed
-      : idea?.materials_needed
-      ? [idea.materials_needed]
-      : [];
-
-    return {
-      levelKey: (idea?.levelKey ?? fallbackLevels[idx]) as "Beginner" | "Intermediate" | "Advanced",
-      levelLabel: (idea?.levelLabel ?? idea?.levelKey ?? fallbackLevels[idx]) as
-        | "Beginner"
-        | "Intermediate"
-        | "Advanced",
-      title: idea?.title ?? `Idea ${idx + 1}`,
-      estimated_duration: idea?.estimated_duration ?? "45 minutes",
-      materials_needed: materialsArray.map((m: any) => String(m)),
-      min_number_students: safeMin,
-      max_number_students: safeMax,
-      description:
-        idea?.description ??
-        "Describe how students engage with the concept, how the teacher facilitates, and what evidence of learning appears.",
-      position: idea?.position,
-    };
-  });
-}
-
-function applyDefaultPositions(ideas: LessonIdea[]): LessonIdea[] {
-  const columnWidth = 260;
-  const rowHeight = 190;
-  const gap = 32;
-
-  return ideas.map((idea, idx) => ({
-    ...idea,
-    position: idea.position ?? {
-      x: (idx % 3) * (columnWidth + gap) + 16,
-      y: Math.floor(idx / 3) * (rowHeight + gap) + 16,
-    },
-  }));
-}
-
-function prepareLessonDesign(raw: LessonDesign): LessonDesign {
-  const normalizedIdeas = applyDefaultPositions(normalizeIdeas(raw.ideas || []));
-  return {
-    ...raw,
-    ideas: normalizedIdeas,
-  };
 }
 
 const demoLessonDesign: LessonDesign = prepareLessonDesign({
@@ -144,6 +92,7 @@ const demoSession: ChatSession = {
   subjectDomain: "Media and Computer Science",
   competency: "MI_MEDIEN_2",
   learningObjective: demoLessonDesign.learningObjective,
+  difficultyLevels: ["Beginner", "Intermediate", "Advanced"],
   teacherContext: demoLessonDesign.teacherContext,
   teachingContent: demoLessonDesign.teachingContent,
   createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
@@ -171,29 +120,10 @@ export default function Page() {
   const [teachingIdeas, setTeachingIdeas] = useState("");
   const [otherNotes, setOtherNotes] = useState("");
   const [teachingInput, setTeachingInput] = useState("");
+  const [includeBeginner, setIncludeBeginner] = useState(true);
+  const [includeIntermediate, setIncludeIntermediate] = useState(true);
+  const [includeAdvanced, setIncludeAdvanced] = useState(true);
   const [hasLoadedDemo, setHasLoadedDemo] = useState(false);
-
-  const canvasViewportRef = useRef<HTMLDivElement>(null);
-  const [canvasScale, setCanvasScale] = useState(1);
-  const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = useState(false);
-  const panStartRef = useRef({ x: 0, y: 0 });
-  const panOffsetRef = useRef({ x: 0, y: 0 });
-  const MIN_SCALE = 0.5;
-  const MAX_SCALE = 2;
-  const SCALE_STEP = 0.1;
-
-  function getWorldPosition(clientX: number, clientY: number) {
-    const viewport = canvasViewportRef.current;
-    if (!viewport) return { x: 0, y: 0 };
-    const rect = viewport.getBoundingClientRect();
-    const localX = clientX - rect.left;
-    const localY = clientY - rect.top;
-    return {
-      x: (localX - canvasOffset.x) / canvasScale,
-      y: (localY - canvasOffset.y) / canvasScale,
-    };
-  }
 
   const [refine, setRefine] = useState("");
   const [loading, setLoading] = useState(false);
@@ -205,6 +135,7 @@ export default function Page() {
   // Step-by-step wizard state
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 9;
+  const hasSelectedDifficulty = includeBeginner || includeIntermediate || includeAdvanced;
 
   const activeSession = useMemo(() => {
     return sessions.find((s) => s.id === activeSessionId) || null;
@@ -227,67 +158,86 @@ export default function Page() {
   }, [classSize, classSizeCustom]);
 
   // Generate lesson design
-  async function generateLessonDesign(sessionHistory: ChatTurn[]): Promise<LessonDesign | null> {
-    const userTurn = `
-Create a LessonDesign using the schema in the system prompt.
-
-Subject Domain: ${subjectDomain}
-Competency: ${competency}
-Learning Objective: ${learningObjective}
-
-Teacher Context:
-- Class Size: ${finalClassSize || "Not specified"}
-- Class Composition: ${classComposition || "Not specified"}
-- Time Available: ${timeAvailable || "Not specified"}
-- Materials Available: ${materialsAvailable || "Not specified"}
-- Teaching Ideas: ${teachingIdeas || "Not specified"}
-- Other Notes: ${otherNotes || "Not specified"}
-
-Teaching Input/Content: ${teachingInput || "Not specified"}
-
-Deliverable requirements:
-- Return exactly three lesson ideas in the "ideas" array: Beginner, Intermediate, Advanced (in that order).
-- Each idea must include: levelKey, levelLabel, title, estimated_duration, materials_needed (array), min_number_students, max_number_students, description.
-- Beginner = highly scaffolded concrete activity; Intermediate = balanced guidance and independence; Advanced = transfer/creative application with minimal scaffolds.
-- Make every description 3-4 sentences describing student actions, teacher moves, and connection to the competency.
-- Respect the teacher context and available materials; suggest low-tech alternatives if needed.
-`;
-
+  async function generateLessonDesign(
+    _sessionHistory: ChatTurn[],
+    refinementRequest?: string
+  ): Promise<LessonDesign | null> {
     try {
-      const res = await fetch("/api/chat", {
+      const legacyBackendUrl = process.env.NEXT_PUBLIC_LEGACY_BACKEND_URL || "http://localhost:4000";
+      const refineNote = refinementRequest?.trim()
+        ? `Teacher refinement request: ${refinementRequest.trim()}`
+        : "";
+      const combinedNotes = [otherNotes, refineNote].filter(Boolean).join("\n");
+      const payload = {
+        competency_id: competency,
+        subject: subjectDomain,
+        cycle: "",
+        learning_objective: learningObjective,
+        materials_available: materialsAvailable,
+        time_available: timeAvailable,
+        teaching_ideas: teachingIdeas,
+        class_size_composition: classComposition || finalClassSize,
+        other_notes: combinedNotes,
+        num_questions_per_level: 3,
+        include_beginner: includeBeginner,
+        include_intermediate: includeIntermediate,
+        include_advanced: includeAdvanced,
+        include_lesson_ideas: true,
+      };
+
+      const res = await fetch(`${legacyBackendUrl}/api/generate_worksheet`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ history: sessionHistory, userTurn }),
+        body: JSON.stringify(payload),
       });
-      const json = await res.json();
 
-      if (json.data) {
-        const lessonDesign = json.data as LessonDesign;
-        const withMetadata: LessonDesign = {
-          ...lessonDesign,
-          metadata: {
-            model: json.metadata?.model || "unknown",
-            generatedAt: json.metadata?.generatedAt ? new Date(json.metadata.generatedAt) : new Date(),
-            version: 1,
-          },
-        };
-        return prepareLessonDesign(withMetadata);
+      if (!res.ok) {
+        const errorText = await res.text();
+        setLastError({ raw: errorText, parseError: `Legacy backend error (${res.status})` });
+        return null;
       }
-      
-      // Handle error case
-      if (json.raw || json.parseError) {
-        setLastError({ raw: json.raw, parseError: json.parseError });
-      }
-      
-      return null;
+
+      const json = await res.json();
+      const legacyIdeas = [
+        ...mapActivitiesToLessonIdeas(json?.activities || []),
+        ...mapLessonIdeasToStickyNotes(json?.lesson_ideas || []),
+      ];
+
+      const lessonDesign: LessonDesign = {
+        topic: json?.competency_id || competency || "Lesson Design",
+        competency: json?.competency_id || competency,
+        learningObjective: json?.learning_objective || learningObjective,
+        teacherContext: {
+          classSize: finalClassSize,
+          classComposition,
+          timeAvailable,
+          materialsAvailable,
+          teachingIdeas,
+          notes: combinedNotes || undefined,
+        },
+        teachingContent: teachingInput,
+        ideas: legacyIdeas,
+        metadata: {
+          model: "legacy-python-backend",
+          generatedAt: new Date(),
+          version: 1,
+        },
+      };
+
+      return prepareLessonDesign(lessonDesign);
     } catch (error) {
       console.error("Error generating lesson design:", error);
+      setLastError({ raw: String(error), parseError: "Legacy backend fetch failed" });
       return null;
     }
   }
 
   async function onGenerate() {
     if (!competency || !learningObjective) return;
+    if (!hasSelectedDifficulty) {
+      setLastError({ parseError: "Please select at least one difficulty level." });
+      return;
+    }
 
     const newSession: ChatSession = {
       id: Date.now().toString(),
@@ -295,6 +245,11 @@ Deliverable requirements:
       subjectDomain,
       competency,
       learningObjective,
+      difficultyLevels: [
+        includeBeginner ? "Beginner" : null,
+        includeIntermediate ? "Intermediate" : null,
+        includeAdvanced ? "Advanced" : null,
+      ].filter(Boolean) as string[],
       teacherContext: {
         classSize: finalClassSize,
         classComposition,
@@ -314,15 +269,17 @@ Deliverable requirements:
     setActiveSessionId(newSession.id);
     setLoading(true);
 
+    const generationInstruction = `Generate a new LessonDesign for ${competency} with learning objective: ${learningObjective}.`;
+
     // Add user message
     const userMessage: ChatTurn = {
       role: "user",
-      content: `Generate lesson design for ${competency} with learning objective: ${learningObjective}`,
+      content: generationInstruction,
       timestamp: new Date(),
     };
 
     // Generate lesson design
-    const lessonDesign = await generateLessonDesign([]);
+    const lessonDesign = await generateLessonDesign([], undefined);
 
     // Update session
     const assistantTurn: ChatTurn = lessonDesign 
@@ -350,15 +307,15 @@ Deliverable requirements:
 
   function onRefine() {
     if (!refine.trim() || !activeSession) return;
-    const msg = `Refine the current LessonDesign with this instruction: ${refine}`;
+    const refineInstruction = `Refine the current LessonDesign with this instruction: ${refine}`;
     
     setLoading(true);
     
-    const refineMessage: ChatTurn = { role: "user", content: msg, timestamp: new Date() };
+    const refineMessage: ChatTurn = { role: "user", content: refineInstruction, timestamp: new Date() };
     
     const historyWithRefinement = [...activeSession.history, refineMessage];
 
-    generateLessonDesign(historyWithRefinement).then((lessonDesign) => {
+    generateLessonDesign(historyWithRefinement, refine).then((lessonDesign) => {
       if (lessonDesign) {
         const assistantTurn: ChatTurn = { role: "assistant", content: JSON.stringify(lessonDesign), timestamp: new Date() };
         
@@ -407,6 +364,9 @@ Deliverable requirements:
     setTeachingIdeas("");
     setOtherNotes("");
     setTeachingInput("");
+    setIncludeBeginner(true);
+    setIncludeIntermediate(true);
+    setIncludeAdvanced(true);
     setCurrentStep(1);
   }
 
@@ -425,7 +385,7 @@ Deliverable requirements:
   function canProceedToNext(): boolean {
     switch (currentStep) {
       case 1: // Competency
-        return !!competency;
+        return !!competency && hasSelectedDifficulty;
       case 2: // Learning Objective
         return !!learningObjective.trim();
       default:
@@ -476,50 +436,6 @@ Deliverable requirements:
         return { ...session, lessonDesigns: updatedDesigns };
       })
     );
-  }
-
-  function handleCanvasWheel(e: React.WheelEvent<HTMLDivElement>) {
-    if (!canvasViewportRef.current) return;
-    e.preventDefault();
-    const rect = canvasViewportRef.current.getBoundingClientRect();
-    const cursorX = e.clientX - rect.left;
-    const cursorY = e.clientY - rect.top;
-    const worldBefore = {
-      x: (cursorX - canvasOffset.x) / canvasScale,
-      y: (cursorY - canvasOffset.y) / canvasScale,
-    };
-    const delta = e.deltaY < 0 ? 1 + SCALE_STEP : 1 - SCALE_STEP;
-    const nextScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, canvasScale * delta));
-    setCanvasScale(nextScale);
-    setCanvasOffset({
-      x: cursorX - worldBefore.x * nextScale,
-      y: cursorY - worldBefore.y * nextScale,
-    });
-  }
-
-  function handleCanvasPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (e.button !== 0) return;
-    if (e.target !== e.currentTarget) return;
-    setIsPanning(true);
-    panStartRef.current = { x: e.clientX, y: e.clientY };
-    panOffsetRef.current = { ...canvasOffset };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  }
-
-  function handleCanvasPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isPanning) return;
-    const deltaX = e.clientX - panStartRef.current.x;
-    const deltaY = e.clientY - panStartRef.current.y;
-    setCanvasOffset({
-      x: panOffsetRef.current.x + deltaX,
-      y: panOffsetRef.current.y + deltaY,
-    });
-  }
-
-  function handleCanvasPointerUp(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isPanning) return;
-    setIsPanning(false);
-    (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
   }
 
   // Load competencies from lehrplan - use direct import
@@ -689,6 +605,12 @@ Deliverable requirements:
               <div className="md:col-span-2">
                 <p className="text-xs uppercase text-gray-500">Learning objective</p>
                 <p className="text-sm text-gray-800 mt-1">{activeSession.learningObjective || "Not specified"}</p>
+                <p className="text-xs uppercase text-gray-500 mt-4">Included levels</p>
+                <p className="text-sm text-gray-800 mt-1">
+                  {activeSession.difficultyLevels?.length
+                    ? activeSession.difficultyLevels.join(", ")
+                    : "Beginner, Intermediate, Advanced"}
+                </p>
               </div>
               <div>
                 <p className="text-xs uppercase text-gray-500">Time available</p>
@@ -735,66 +657,7 @@ Deliverable requirements:
             )}
           </div>
 
-          {/* Canvas Area */}
-          <div className="flex-1 overflow-hidden">
-            <div
-              ref={canvasViewportRef}
-              className={`relative w-full h-full ${
-                isPanning ? "cursor-grabbing" : "cursor-grab"
-              }`}
-              onWheel={handleCanvasWheel}
-              onPointerDown={handleCanvasPointerDown}
-              onPointerMove={handleCanvasPointerMove}
-              onPointerUp={handleCanvasPointerUp}
-              onPointerLeave={handleCanvasPointerUp}
-              style={{
-                backgroundColor: "#f8fafc",
-                backgroundImage:
-                  "linear-gradient(0deg, rgba(148,163,184,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.25) 1px, transparent 1px)",
-                backgroundSize: `${120 * canvasScale}px ${120 * canvasScale}px`,
-                backgroundPosition: `${((canvasOffset.x % (120 * canvasScale)) + (120 * canvasScale)) % (120 * canvasScale)}px ${((canvasOffset.y % (120 * canvasScale)) + (120 * canvasScale)) % (120 * canvasScale)}px`,
-              }}
-            >
-              <div
-                className="absolute"
-                style={{
-                  width: 5000,
-                  height: 3000,
-                  transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px) scale(${canvasScale})`,
-                  transformOrigin: "0 0",
-                }}
-              >
-                {currentLessonDesign && currentLessonDesign.ideas.length > 0 ? (
-                  currentLessonDesign.ideas.map((idea, idx) => (
-                    <StickyNote
-                      key={idx}
-                      idea={idea}
-                      index={idx}
-                      onDrag={handleIdeaDrag}
-                      getWorldPosition={getWorldPosition}
-                    />
-                  ))
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
-                    Generate a lesson to populate this canvas with ideas.
-                  </div>
-                )}
-              </div>
-              <div className="absolute top-4 right-4 text-xs text-gray-600 bg-white/80 px-3 py-1 rounded-full shadow">
-                Scroll to zoom • Drag empty canvas to pan • Drag notes to rearrange
-              </div>
-              {loading && (
-                <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none">
-                  <div className="flex gap-2 text-sm text-gray-600">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
-                    <span className="ml-2">Generating ideas...</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <LessonCanvas lessonDesign={currentLessonDesign} loading={loading} onIdeaDrag={handleIdeaDrag} />
 
           {/* Refinement */}
           <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
@@ -926,6 +789,56 @@ Deliverable requirements:
                             </p>
                           </div>
                         )}
+                      </div>
+                      <div className="pt-4 border-t border-gray-100">
+                        <p className="text-sm font-medium text-gray-800">Difficulty Levels to Include</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Choose which learner profiles you want ideas for. Select at least one level.
+                        </p>
+                        <div className="mt-4 space-y-3">
+                          <label className="flex gap-3 items-start">
+                            <input
+                              type="checkbox"
+                              className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                              checked={includeBeginner}
+                              onChange={(e) => setIncludeBeginner(e.target.checked)}
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">Beginner (high scaffolding)</p>
+                              <p className="text-xs text-gray-500">
+                                Concrete modeling, explicit steps, and lots of guidance.
+                              </p>
+                            </div>
+                          </label>
+                          <label className="flex gap-3 items-start">
+                            <input
+                              type="checkbox"
+                              className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                              checked={includeIntermediate}
+                              onChange={(e) => setIncludeIntermediate(e.target.checked)}
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">Intermediate (balanced guidance)</p>
+                              <p className="text-xs text-gray-500">
+                                Structured collaboration with room for analysis and application.
+                              </p>
+                            </div>
+                          </label>
+                          <label className="flex gap-3 items-start">
+                            <input
+                              type="checkbox"
+                              className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                              checked={includeAdvanced}
+                              onChange={(e) => setIncludeAdvanced(e.target.checked)}
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">Advanced (creative transfer)</p>
+                              <p className="text-xs text-gray-500">
+                                Open-ended challenges with minimal scaffolds and student ownership.
+                              </p>
+                            </div>
+                          </label>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1110,6 +1023,20 @@ Deliverable requirements:
                             </p>
                           </div>
                           <div>
+                            <strong className="text-gray-700">Difficulty Levels:</strong>
+                            <p className="text-gray-600 mt-1">
+                              {hasSelectedDifficulty
+                                ? [
+                                    includeBeginner ? "Beginner" : null,
+                                    includeIntermediate ? "Intermediate" : null,
+                                    includeAdvanced ? "Advanced" : null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(", ")
+                                : "None selected"}
+                            </p>
+                          </div>
+                          <div>
                             <strong className="text-gray-700">Learning Objective:</strong>
                             <p className="text-gray-600 mt-1">{learningObjective || "Not specified"}</p>
                           </div>
@@ -1194,93 +1121,6 @@ Deliverable requirements:
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-interface StickyNoteProps {
-  idea: LessonIdea;
-  index: number;
-  onDrag: (index: number, position: { x: number; y: number }) => void;
-  getWorldPosition: (clientX: number, clientY: number) => { x: number; y: number };
-}
-
-function StickyNote({ idea, index, onDrag, getWorldPosition }: StickyNoteProps) {
-  const noteRef = useRef<HTMLDivElement>(null);
-  const [dragging, setDragging] = useState(false);
-  const offsetRef = useRef({ x: 0, y: 0 });
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.button !== undefined && e.button !== 0) return;
-    e.stopPropagation();
-    e.preventDefault();
-
-    const worldPoint = getWorldPosition(e.clientX, e.clientY);
-    offsetRef.current = {
-      x: worldPoint.x - (idea.position?.x ?? 0),
-      y: worldPoint.y - (idea.position?.y ?? 0),
-    };
-
-    const originalUserSelect = document.body.style.userSelect;
-    document.body.style.userSelect = "none";
-    setDragging(true);
-
-    const handleMove = (ev: PointerEvent) => {
-      const world = getWorldPosition(ev.clientX, ev.clientY);
-      onDrag(index, {
-        x: world.x - offsetRef.current.x,
-        y: world.y - offsetRef.current.y,
-      });
-    };
-
-    const handleUp = () => {
-      setDragging(false);
-      document.body.style.userSelect = originalUserSelect;
-      window.removeEventListener("pointermove", handleMove);
-      window.removeEventListener("pointerup", handleUp);
-    };
-
-    window.addEventListener("pointermove", handleMove);
-    window.addEventListener("pointerup", handleUp);
-  };
-
-  const materials =
-    idea.materials_needed && idea.materials_needed.length > 0
-      ? idea.materials_needed
-      : ["No special materials"];
-
-  return (
-    <div
-      ref={noteRef}
-      className={`absolute w-64 bg-yellow-50 border border-yellow-200 rounded-2xl shadow-lg p-4 cursor-grab transition-shadow ${
-        dragging ? "ring-2 ring-purple-400 cursor-grabbing" : "hover:shadow-xl"
-      }`}
-      style={{ left: idea.position?.x ?? 0, top: idea.position?.y ?? 0 }}
-      onPointerDown={handlePointerDown}
-    >
-      <div className="flex items-center justify-between mb-1">
-        <p className="text-xs uppercase text-amber-700 tracking-wide">Lesson idea</p>
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-purple-700 bg-purple-100">
-          {idea.levelLabel || idea.levelKey}
-        </span>
-      </div>
-      <h4 className="text-lg font-semibold text-gray-900 mb-2">{idea.title}</h4>
-      <div className="text-xs text-gray-600 space-y-1 mb-3">
-        <p>
-          <span className="font-semibold">Duration:</span> {idea.estimated_duration}
-        </p>
-        <p>
-          <span className="font-semibold">Group size:</span>{" "}
-          {idea.min_number_students}–{idea.max_number_students} students
-        </p>
-        <p className="font-semibold">Materials:</p>
-        <ul className="list-disc list-inside text-gray-700 space-y-0.5">
-          {materials.map((item, idx) => (
-            <li key={idx}>{item}</li>
-          ))}
-        </ul>
-      </div>
-      <p className="text-sm text-gray-800 whitespace-pre-line leading-snug">{idea.description}</p>
     </div>
   );
 }
