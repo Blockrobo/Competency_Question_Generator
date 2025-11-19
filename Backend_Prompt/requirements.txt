@@ -8,7 +8,6 @@ httpcore==1.0.9
 httpx==0.28.1
 idna==3.11
 jiter==0.12.0
-ollama==0.6.1
 openai==2.8.0
 pydantic==2.12.4
 pydantic_core==2.41.5

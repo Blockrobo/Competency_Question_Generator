@@ -1,6 +1,8 @@
+export type LevelKey = "Beginner" | "Intermediate" | "Advanced" | "General";
+
 export interface LessonIdea {
-  levelKey: "Beginner" | "Intermediate" | "Advanced";
-  levelLabel?: "Beginner" | "Intermediate" | "Advanced";
+  levelKey: LevelKey;
+  levelLabel?: LevelKey;
   title: string;
   estimated_duration: string;
   materials_needed: string[];
@@ -11,6 +13,9 @@ export interface LessonIdea {
     x: number;
     y: number;
   };
+  learningObjectives?: string[];
+  activity_description?: string;
+  isGeneral?: boolean;
 }
 
 export interface LessonDesign {
@@ -41,35 +46,13 @@ export interface ChatTurn {
   timestamp?: Date;
 }
 
-export interface Student {
-  id: string;
-  name: string;
-  learningStyle?: string;
-  interests?: string;
-  needsSupportWith?: string;
-  createdAt: Date;
-}
-
-export interface Feedback {
-  lessonDesignId: string;
-  rating: number; // 1-5
-  comment?: string;
-  usedInClass?: boolean;
-  submittedAt: Date;
-}
-
-export interface QuestionSetVersion {
-  lessonDesign: LessonDesign;
-  timestamp: Date;
-  action: "generated" | "edited" | "regenerated" | "replaced";
-}
-
 export interface ChatSession {
   id: string;
   title: string;
   subjectDomain: string;
   competency: string;
   learningObjective: string;
+  difficultyLevels?: string[];
   teacherContext: {
     classSize?: string;
     classComposition?: string;
@@ -83,9 +66,5 @@ export interface ChatSession {
   lastMessageAt: Date;
   lessonDesigns: LessonDesign[]; // Multiple lesson designs for the session
   history: ChatTurn[];
-  // HCAI: Version history for undo/redo
-  versionHistory?: QuestionSetVersion[];
   originalDesigns?: LessonDesign[]; // Original generated designs
-  feedback?: Feedback[];
 }
-

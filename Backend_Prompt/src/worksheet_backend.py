@@ -1,8 +1,9 @@
-import ollama
 import json
 import os
 import PyPDF2
 import docx
+from openai import OpenAI
+
 
 def extract_material_content(file_path):
     """
@@ -10,41 +11,45 @@ def extract_material_content(file_path):
     Supports: .txt, .pdf, .docx, .md
     """
     import os
-    
+
     if not os.path.exists(file_path):
         return f"File not found: {file_path}"
-    
+
     ext = os.path.splitext(file_path)[1].lower()
-    
+
     try:
-        if ext == '.txt' or ext == '.md':
-            with open(file_path, 'r', encoding='utf-8') as f:
+        if ext == ".txt" or ext == ".md":
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
                 # Summarize if too long (>2000 chars)
                 if len(content) > 2000:
                     return f"[Text file, {len(content)} chars]: {content[:500]}... [truncated]"
                 return f"[Text file]: {content}"
-        
-        elif ext == '.pdf':
+
+        elif ext == ".pdf":
             content = ""
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 reader = PyPDF2.PdfReader(f)
                 for page in reader.pages:
                     content += page.extract_text()
             if len(content) > 2000:
-                return f"[PDF file, {len(content)} chars]: {content[:500]}... [truncated]"
+                return (
+                    f"[PDF file, {len(content)} chars]: {content[:500]}... [truncated]"
+                )
             return f"[PDF file]: {content}"
-        
-        elif ext == '.docx':
+
+        elif ext == ".docx":
             doc = docx.Document(file_path)
             content = "\n".join([paragraph.text for paragraph in doc.paragraphs])
             if len(content) > 2000:
-                return f"[Word file, {len(content)} chars]: {content[:500]}... [truncated]"
+                return (
+                    f"[Word file, {len(content)} chars]: {content[:500]}... [truncated]"
+                )
             return f"[Word file]: {content}"
-        
+
         else:
             return f"[{ext} file]: {os.path.basename(file_path)} (unsupported format)"
-    
+
     except Exception as e:
         return f"[Error reading {os.path.basename(file_path)}]: {str(e)}"
 
@@ -55,23 +60,22 @@ def summarize_uploaded_materials(config):
     """
     if not config.uploaded_materials:
         return "No materials uploaded."
-    
+
     summaries = []
     for material_path in config.uploaded_materials:
         content = extract_material_content(material_path)
         summaries.append(content)
-    
+
     return "\n\n".join(summaries)
 
-# Define competency levels
-COMPETENCY_LEVELS = [
-    "beginner",
-    "intermediate",
-    "advanced"
-]
 
-# Model to use
-MODEL = "llama3.2"
+# Define competency levels
+COMPETENCY_LEVELS = ["beginner", "intermediate", "advanced"]
+
+# OpenAI configuration
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+openai_client = OpenAI()
+
 
 def build_system_prompt(config, level):
     """
@@ -84,29 +88,33 @@ def build_system_prompt(config, level):
     # Load the single description file
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
-    
+
     desc_path = os.path.join(project_root, "data", "level_descriptors.json")
-    with open(desc_path, 'r', encoding='utf-8') as f:
+    with open(desc_path, "r", encoding="utf-8") as f:
         level_descriptors = json.load(f)
 
     # Get competency details
     competency = get_competency_details(config.competency_id)
-    
+
     # Summarize materials
     summarised_materials = summarize_uploaded_materials(config)
-    
+
     additional_input = f"{config.other_notes}\n{summarised_materials}"
 
     # Get the descriptions and examples from the single file
-    description = level_descriptors[level]['description']
-    example_activities_list = level_descriptors[level]['example_activities']
-    example_activities = "\n".join([f"- {example}" for example in example_activities_list])
+    description = level_descriptors[level]["description"]
+    example_activities_list = level_descriptors[level]["example_activities"]
+    example_activities = "\n".join(
+        [f"- {example}" for example in example_activities_list]
+    )
 
     prompt = f"""You are an expert lesson activity designer specialised in Swiss Medien und Informatik aligned with Lehrplan 21.
 
 This is the competency they are focusing on: {competency['name']}.
 
 This is how many students are in the class: {config.class_size_composition}.
+
+This is the profile of the class composition: {config.class_composition}.
 
 This is the time available: {config.time_available} minutes.
 
@@ -158,7 +166,9 @@ Do not include any text or formatting outside of this JSON.
 """
     return prompt
 
+
 import re
+
 
 def parse_agent_response(agent_response):
     """
@@ -168,14 +178,14 @@ def parse_agent_response(agent_response):
     json_text = ""
     try:
         # First, try to find JSON within markdown fences
-        match = re.search(r'```(json)?\s*([\s\S]*?)\s*```', agent_response)
+        match = re.search(r"```(json)?\s*([\s\S]*?)\s*```", agent_response)
         if match:
             json_text = match.group(2)
         else:
             # If no markdown, find the first '{' or '[' and last '}' or ']'
-            start_brace = agent_response.find('{')
-            start_bracket = agent_response.find('[')
-            
+            start_brace = agent_response.find("{")
+            start_bracket = agent_response.find("[")
+
             if start_brace == -1 and start_bracket == -1:
                 raise ValueError("No JSON object or array found in the response.")
 
@@ -186,16 +196,16 @@ def parse_agent_response(agent_response):
             else:
                 start = min(start_brace, start_bracket)
 
-            end_brace = agent_response.rfind('}')
-            end_bracket = agent_response.rfind(']')
-            
+            end_brace = agent_response.rfind("}")
+            end_bracket = agent_response.rfind("]")
+
             if end_brace == -1 and end_bracket == -1:
                 # This case should be rare if start was found
                 raise ValueError("Unbalanced JSON object or array found.")
 
             end = max(end_brace, end_bracket)
-            
-            json_text = agent_response[start:end+1]
+
+            json_text = agent_response[start : end + 1]
 
         # Now, try to parse the extracted text
         parsed = json.loads(json_text)
@@ -203,7 +213,7 @@ def parse_agent_response(agent_response):
         # If the result is an object with an "activities" key, return the list
         if isinstance(parsed, dict) and "activities" in parsed:
             return parsed["activities"]
-        
+
         # Otherwise, return the parsed JSON (which should be a list)
         return parsed
 
@@ -214,6 +224,26 @@ def parse_agent_response(agent_response):
         return [{"description": agent_response, "title": "Error parsing response"}]
 
 
+def run_openai_chat(messages, temperature: float = 0.4) -> str:
+    """
+    Call OpenAI's Chat Completions API and return the string content.
+    """
+    completion = openai_client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=messages,
+        temperature=temperature,
+    )
+    message = completion.choices[0].message if completion.choices else None
+    content = message.content if message else ""
+    if isinstance(content, list):
+        content = "".join(
+            part.get("text", "")
+            for part in content
+            if isinstance(part, dict) and part.get("type") == "text"
+        )
+    return content if content is not None else ""
+
+
 def assess_student_response(question, student_answer, difficulty_level):
     """
     Assess student response and assign competency level
@@ -221,7 +251,7 @@ def assess_student_response(question, student_answer, difficulty_level):
     # This function needs to be adapted to the new prompt structure if it's to be used.
     # For now, it's not the main focus of the refactoring.
     # We can create a simple prompt for assessment.
-    
+
     assessment_prompt = f"""Assess this student response:
 
 Question: {question}
@@ -233,34 +263,30 @@ Provide:
 3. Specific feedback for the student
 4. Evidence supporting the competency rating
 """
-    
+
     messages = [
         {"role": "system", "content": "You are an expert in educational assessment."},
-        {"role": "user", "content": assessment_prompt}
+        {"role": "user", "content": assessment_prompt},
     ]
-    
-    response = ollama.chat(
-        model=MODEL,
-        messages=messages
-    )
-    
-    return response['message']['content']
+
+    return run_openai_chat(messages)
+
 
 # Test the system with teacher interface
 if __name__ == "__main__":
     from teacher_interface import interactive_teacher_setup
-    
+
     # Get configuration from teacher
     config = interactive_teacher_setup()
-    
+
     if config is None:
         print("Exiting...")
         exit()
-    
+
     print("\n" + "=" * 70)
     print("GENERATING WORKSHEET...")
     print("=" * 70)
-    
+
     # Determine which difficulty levels to include
     difficulty_levels = []
     if config.include_beginner:
@@ -269,7 +295,7 @@ if __name__ == "__main__":
         difficulty_levels.append("intermediate")
     if config.include_advanced:
         difficulty_levels.append("advanced")
-    
+
     # Generate worksheet
     worksheet = {
         "subject": config.subject,
@@ -282,42 +308,38 @@ if __name__ == "__main__":
             "time_available": config.time_available,
             "teaching_ideas": config.teaching_ideas,
             "class_size_composition": config.class_size_composition,
-            "other_notes": config.other_notes
+            "other_notes": config.other_notes,
         },
         "activities": [],
-        "lesson_ideas": None
+        "lesson_ideas": None,
     }
 
-    
     # Generate questions for each selected difficulty level
     for difficulty in difficulty_levels:
         print(f"\n--- Generating {difficulty} activities ---")
-        
+
         system_prompt = build_system_prompt(config, difficulty)
-        
+
         messages = [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Generate {config.num_questions_per_level} activities for the {difficulty} level."}
+            {
+                "role": "user",
+                "content": f"Generate {config.num_questions_per_level} activities for the {difficulty} level.",
+            },
         ]
-        
-        response = ollama.chat(
-            model=MODEL,
-            messages=messages
-        )
-        
-        raw_response = response['message']['content']
-        
+
+        raw_response = run_openai_chat(messages)
+
         structured_activities = parse_agent_response(raw_response)
-        
+
         worksheet["activities"].extend(structured_activities)
-        
+
         print(f"✓ {difficulty.capitalize()} activities generated and structured")
 
-    
     # Generate lesson ideas if requested
     if config.include_lesson_ideas:
         print(f"\n--- Generating lesson ideas ---")
-        
+
         lesson_prompt = f"""
 Based on the following context, generate 3-5 creative lesson ideas.
 
@@ -335,20 +357,20 @@ Structure your ideas as an array of JSON objects, each with:
 
 **IMPORTANT:** Your entire response must be a single, valid JSON array. Do not include any introductory text, explanations, or markdown formatting. The response should start with `[` and end with `]`.
 """
-        
+
         messages = [
-            {"role": "system", "content": "You are an expert education consultant specializing in Swiss Lehrplan 21 curriculum design."},
-            {"role": "user", "content": lesson_prompt}
+            {
+                "role": "system",
+                "content": "You are an expert education consultant specializing in Swiss Lehrplan 21 curriculum design.",
+            },
+            {"role": "user", "content": lesson_prompt},
         ]
-        
-        response = ollama.chat(
-            model=MODEL,
-            messages=messages
-        )
-        
-        worksheet["lesson_ideas"] = parse_agent_response(response['message']['content'])
+
+        lesson_response = run_openai_chat(messages)
+
+        worksheet["lesson_ideas"] = parse_agent_response(lesson_response)
         print(f"✓ Lesson ideas generated and structured")
-    
+
     # Display results
     print("\n" + "=" * 70)
     print("GENERATED WORKSHEET")
@@ -357,7 +379,7 @@ Structure your ideas as an array of JSON objects, each with:
     print(f"Cycle: {worksheet['cycle']}")
     print(f"Competency: {worksheet['competency_id']}")
     print(f"Learning Objective: {worksheet['learning_objective']}")
-    
+
     if worksheet.get("lesson_ideas"):
         print("\n[LESSON IDEAS]")
         print("-" * 70)
@@ -367,7 +389,7 @@ Structure your ideas as an array of JSON objects, each with:
             print(f"  Description: {idea.get('activity_description', 'N/A')}")
             print("-" * 20)
         print()
-    
+
     print("\n[ACTIVITIES]")
     print("-" * 70)
     for activity in worksheet["activities"]:
@@ -377,19 +399,21 @@ Structure your ideas as an array of JSON objects, each with:
         print(f"  Description: {activity.get('description', 'N/A')}")
         print("-" * 20)
     print()
-    
+
     # Save to file
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
     output_dir = os.path.join(project_root, "output")
-    
+
     os.makedirs(output_dir, exist_ok=True)
-    
-    safe_filename = f"worksheet_{config.competency_id}_{config.cycle.replace(' ', '_')}.json"
+
+    safe_filename = (
+        f"worksheet_{config.competency_id}_{config.cycle.replace(' ', '_')}.json"
+    )
     output_file = os.path.join(output_dir, safe_filename)
-    
-    with open(output_file, 'w', encoding='utf-8') as f:
+
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(worksheet, f, indent=2, ensure_ascii=False)
-    
+
     print(f"\n✓ Worksheet saved to: {output_file}")
     print("\n" + "=" * 70)

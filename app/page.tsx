@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { ChatTurn, LessonDesign, ChatSession, LessonIdea } from "@/types/questions";
+import { ChatTurn, LessonDesign, ChatSession } from "@/types/questions";
 import HelpAbout from "@/components/HelpAbout";
 import ErrorDisplay from "@/components/ErrorDisplay";
 import LessonCanvas from "@/components/LessonCanvas";
@@ -9,6 +9,7 @@ import {
   prepareLessonDesign,
   mapActivitiesToLessonIdeas,
   mapLessonIdeasToStickyNotes,
+  DEFAULT_LEVELS,
 } from "@/lib/lessonIdeas";
 import lehrplanData from "@/data/lehrplan21_media_informatics.json";
 
@@ -92,7 +93,7 @@ const demoSession: ChatSession = {
   subjectDomain: "Media and Computer Science",
   competency: "MI_MEDIEN_2",
   learningObjective: demoLessonDesign.learningObjective,
-  difficultyLevels: ["Beginner", "Intermediate", "Advanced"],
+  difficultyLevels: [...DEFAULT_LEVELS],
   teacherContext: demoLessonDesign.teacherContext,
   teachingContent: demoLessonDesign.teachingContent,
   createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
@@ -605,11 +606,13 @@ export default function Page() {
               <div className="md:col-span-2">
                 <p className="text-xs uppercase text-gray-500">Learning objective</p>
                 <p className="text-sm text-gray-800 mt-1">{activeSession.learningObjective || "Not specified"}</p>
-                <p className="text-xs uppercase text-gray-500 mt-4">Included levels</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-gray-500">Included levels</p>
                 <p className="text-sm text-gray-800 mt-1">
                   {activeSession.difficultyLevels?.length
                     ? activeSession.difficultyLevels.join(", ")
-                    : "Beginner, Intermediate, Advanced"}
+                    : DEFAULT_LEVELS.join(", ")}
                 </p>
               </div>
               <div>

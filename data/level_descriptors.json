@@ -1,0 +1,32 @@
+{
+  "beginner": {
+    "description": "Guidance for Beginner Level: Use high scaffolding with templates and worked examples. Focus on recall, recognition, and simple comprehension. Pupils are dependent on explicit prompts and work within a well-defined problem space with a single solution. All prior knowledge should be explicitly taught in the activity.",
+    "example_activities": [
+      "Provide a complete template for students to fill out.",
+      "Show a worked example with each step clearly explained, then ask students to repeat the process with different data.",
+      "Create a matching exercise to link vocabulary to definitions.",
+      "Give explicit, numbered prompts: 'First do X, then do Y, then do Z.'",
+      "Ask simple recall questions based on a provided text or image."
+    ]
+  },
+  "intermediate": {
+    "description": "Guidance for Intermediate Level: Use medium scaffolding with frameworks and guiding questions. Focus on application, analysis, and simple reasoning. Pupils have moderate independence within a structured environment. The problem space is defined but allows for multiple valid solutions. Prior knowledge from the beginner level is assumed.",
+    "example_activities": [
+      "Provide a checklist or framework to guide thinking without giving the full solution.",
+      "Ask guiding questions that prompt analysis, such as 'What are the pros and cons of this approach?'",
+      "Require students to apply a known concept to a new but similar situation.",
+      "Set a problem with defined constraints but multiple valid solution paths.",
+      "Ask students to compare and contrast two different media examples."
+    ]
+  },
+  "advanced": {
+    "description": "Guidance for Advanced Level: Use low scaffolding with minimal guidance, encouraging students to define their own approach. Focus on evaluation, creation, and independent reasoning. Pupils have full autonomy in their problem-solving process. The problem space is ill-defined, and the learner helps to define it. Requires synthesis of multiple concepts.",
+    "example_activities": [
+      "Set an open-ended project where the student defines their own approach and process.",
+      "Ask students to evaluate multiple perspectives on a complex issue and form their own justified opinion.",
+      "Have students create an original media artifact or a solution to a real-world problem.",
+      "Present a problem with ill-defined or open-ended constraints.",
+      "Require students to synthesize knowledge from multiple competency areas to solve a complex challenge."
+    ]
+  }
+}

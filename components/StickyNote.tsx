@@ -12,6 +12,7 @@ export default function StickyNote({ idea, index, onDrag, getWorldPosition }: St
   const noteRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const offsetRef = useRef({ x: 0, y: 0 });
+  const isGeneral = idea.levelLabel === "General" || idea.isGeneral;
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (e.button !== undefined && e.button !== 0) return;
@@ -52,6 +53,20 @@ export default function StickyNote({ idea, index, onDrag, getWorldPosition }: St
       ? idea.materials_needed
       : ["No special materials"];
 
+  const levelTagClasses = (() => {
+    if (isGeneral) return "text-purple-700 bg-purple-100";
+    switch (idea.levelKey) {
+      case "Beginner":
+        return "text-green-800 bg-green-100";
+      case "Intermediate":
+        return "text-orange-800 bg-orange-100";
+      case "Advanced":
+        return "text-red-800 bg-red-100";
+      default:
+        return "text-purple-700 bg-purple-100";
+    }
+  })();
+
   return (
     <div
       ref={noteRef}
@@ -64,8 +79,8 @@ export default function StickyNote({ idea, index, onDrag, getWorldPosition }: St
     >
       <div className="flex items-center justify-between mb-1">
         <p className="text-xs uppercase text-amber-700 tracking-wide">Lesson idea</p>
-        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-purple-700 bg-purple-100">
-          {idea.levelLabel || idea.levelKey}
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${levelTagClasses}`}>
+          {isGeneral ? "General" : idea.levelLabel || idea.levelKey}
         </span>
       </div>
       <h4 className="text-lg font-semibold text-gray-900 mb-2">{idea.title}</h4>
@@ -73,16 +88,28 @@ export default function StickyNote({ idea, index, onDrag, getWorldPosition }: St
         <p>
           <span className="font-semibold">Duration:</span> {idea.estimated_duration}
         </p>
-        <p>
-          <span className="font-semibold">Group size:</span>{" "}
-          {idea.min_number_students}–{idea.max_number_students} students
-        </p>
+        {!isGeneral && (
+          <p>
+            <span className="font-semibold">Group size:</span>{" "}
+            {idea.min_number_students}–{idea.max_number_students} students
+          </p>
+        )}
         <p className="font-semibold">Materials:</p>
         <ul className="list-disc list-inside text-gray-700 space-y-0.5">
           {materials.map((item, idx) => (
             <li key={idx}>{item}</li>
           ))}
         </ul>
+        {isGeneral && idea.learningObjectives && idea.learningObjectives.length > 0 && (
+          <div className="pt-2">
+            <p className="font-semibold">Learning objectives:</p>
+            <ul className="list-disc list-inside text-gray-700 space-y-0.5">
+              {idea.learningObjectives.map((objective, idx) => (
+                <li key={idx}>{objective}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       <p className="text-sm text-gray-800 whitespace-pre-line leading-snug">{idea.description}</p>
     </div>
