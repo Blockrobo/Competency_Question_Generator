@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from teacher_interface import TeacherConfig
@@ -6,6 +7,8 @@ from worksheet_backend import (
     parse_agent_response,
     run_openai_chat,
 )
+
+MODEL = os.getenv("MODEL", os.getenv("OPENAI_MODEL", "gpt-4.1-mini"))
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
