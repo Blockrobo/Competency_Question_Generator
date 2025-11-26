@@ -53,6 +53,7 @@ export interface ChatSession {
   competency: string;
   learningObjective: string;
   difficultyLevels?: string[];
+  includeGeneralIdeas?: boolean;
   teacherContext: {
     classSize?: string;
     classComposition?: string;

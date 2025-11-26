@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { ChatTurn, LessonDesign, ChatSession } from "@/types/questions";
 import HelpAbout from "@/components/HelpAbout";
 import ErrorDisplay from "@/components/ErrorDisplay";
@@ -94,6 +95,7 @@ const demoSession: ChatSession = {
   competency: "MI_MEDIEN_2",
   learningObjective: demoLessonDesign.learningObjective,
   difficultyLevels: [...DEFAULT_LEVELS],
+  includeGeneralIdeas: true,
   teacherContext: demoLessonDesign.teacherContext,
   teachingContent: demoLessonDesign.teachingContent,
   createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5),
@@ -104,6 +106,7 @@ const demoSession: ChatSession = {
 };
 
 export default function Page() {
+  const searchParams = useSearchParams();
   // Chat sessions
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -117,13 +120,15 @@ export default function Page() {
   const [classSizeCustom, setClassSizeCustom] = useState("");
   const [classComposition, setClassComposition] = useState("");
   const [timeAvailable, setTimeAvailable] = useState("");
+  const [customTime, setCustomTime] = useState("");
   const [materialsAvailable, setMaterialsAvailable] = useState("");
   const [teachingIdeas, setTeachingIdeas] = useState("");
   const [otherNotes, setOtherNotes] = useState("");
-  const [teachingInput, setTeachingInput] = useState("");
   const [includeBeginner, setIncludeBeginner] = useState(true);
   const [includeIntermediate, setIncludeIntermediate] = useState(true);
   const [includeAdvanced, setIncludeAdvanced] = useState(true);
+  const [includeGeneralIdeas, setIncludeGeneralIdeas] = useState(true);
+  const [questionsPerLevel, setQuestionsPerLevel] = useState("3");
   const [hasLoadedDemo, setHasLoadedDemo] = useState(false);
 
   const [refine, setRefine] = useState("");
@@ -158,7 +163,23 @@ export default function Page() {
     return "";
   }, [classSize, classSizeCustom]);
 
+  const finalTimeAvailable = useMemo(() => {
+    if (timeAvailable === "custom" && customTime.trim()) {
+      return customTime.trim();
+    }
+    if (timeAvailable && timeAvailable !== "custom") {
+      return timeAvailable;
+    }
+    return "";
+  }, [timeAvailable, customTime]);
+
   // Generate lesson design
+  const normalizedQuestionsPerLevel = useMemo(() => {
+    const parsed = parseInt(questionsPerLevel, 10);
+    if (Number.isNaN(parsed)) return 1;
+    return Math.min(10, Math.max(1, parsed));
+  }, [questionsPerLevel]);
+
   async function generateLessonDesign(
     _sessionHistory: ChatTurn[],
     refinementRequest?: string
@@ -175,15 +196,15 @@ export default function Page() {
         cycle: "",
         learning_objective: learningObjective,
         materials_available: materialsAvailable,
-        time_available: timeAvailable,
+        time_available: finalTimeAvailable,
         teaching_ideas: teachingIdeas,
         class_size_composition: classComposition || finalClassSize,
         other_notes: combinedNotes,
-        num_questions_per_level: 3,
+        num_questions_per_level: normalizedQuestionsPerLevel,
         include_beginner: includeBeginner,
         include_intermediate: includeIntermediate,
         include_advanced: includeAdvanced,
-        include_lesson_ideas: true,
+        include_lesson_ideas: includeGeneralIdeas,
       };
 
       const res = await fetch(`${legacyBackendUrl}/api/generate_worksheet`, {
@@ -216,7 +237,7 @@ export default function Page() {
           teachingIdeas,
           notes: combinedNotes || undefined,
         },
-        teachingContent: teachingInput,
+        teachingContent: undefined,
         ideas: legacyIdeas,
         metadata: {
           model: "legacy-python-backend",
@@ -251,15 +272,16 @@ export default function Page() {
         includeIntermediate ? "Intermediate" : null,
         includeAdvanced ? "Advanced" : null,
       ].filter(Boolean) as string[],
+      includeGeneralIdeas,
       teacherContext: {
         classSize: finalClassSize,
         classComposition,
-        timeAvailable,
+        timeAvailable: finalTimeAvailable,
         materialsAvailable,
         teachingIdeas,
         notes: otherNotes,
       },
-      teachingContent: teachingInput,
+      teachingContent: undefined,
       createdAt: new Date(),
       lastMessageAt: new Date(),
       lessonDesigns: [],
@@ -361,13 +383,15 @@ export default function Page() {
     setClassSizeCustom("");
     setClassComposition("");
     setTimeAvailable("");
+    setCustomTime("");
     setMaterialsAvailable("");
     setTeachingIdeas("");
     setOtherNotes("");
-    setTeachingInput("");
     setIncludeBeginner(true);
     setIncludeIntermediate(true);
     setIncludeAdvanced(true);
+    setIncludeGeneralIdeas(true);
+    setQuestionsPerLevel("3");
     setCurrentStep(1);
   }
 
@@ -402,7 +426,6 @@ export default function Page() {
     "Materials",
     "Teaching Ideas",
     "Other Notes",
-    "Teaching Input",
     "Review & Generate"
   ];
 
@@ -457,10 +480,16 @@ export default function Page() {
     }
   }, [hasLoadedDemo, sessions.length]);
 
+  useEffect(() => {
+    if (searchParams?.get("new") === "1") {
+      startNewChat();
+    }
+  }, [searchParams]);
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* HCAI: Help/About modal */}
-      <HelpAbout variant={activeSession ? "bottom-right" : "top-right"} />
+      <HelpAbout variant={activeSession ? "bottom-right" : "bottom-right"} />
 
       {/* Left Sidebar - History */}
       <div
@@ -509,7 +538,6 @@ export default function Page() {
                     setMaterialsAvailable(session.teacherContext?.materialsAvailable || "");
                     setTeachingIdeas(session.teacherContext?.teachingIdeas || "");
                     setOtherNotes(session.teacherContext?.notes || "");
-                    setTeachingInput(session.teachingContent || "");
                     setCurrentStep(1); // Reset to first step when loading history
                   }}
                   className={`p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors relative group ${
@@ -618,6 +646,12 @@ export default function Page() {
               <div>
                 <p className="text-xs uppercase text-gray-500">Time available</p>
                 <p className="text-sm text-gray-800 mt-1">{activeSession.teacherContext.timeAvailable || "Not specified"}</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase text-gray-500">General lesson ideas</p>
+                <p className="text-sm text-gray-800 mt-1">
+                  {(activeSession.includeGeneralIdeas ?? true) ? "Included" : "Excluded"}
+                </p>
               </div>
               <div>
                 <p className="text-xs uppercase text-gray-500">Class size</p>
@@ -740,8 +774,7 @@ export default function Page() {
                     {currentStep === 5 && "What materials and resources are available?"}
                     {currentStep === 6 && "Share any initial teaching ideas or approaches"}
                     {currentStep === 7 && "Any additional notes or considerations?"}
-                    {currentStep === 8 && "Your teaching idea, content, or input for the lesson"}
-                    {currentStep === 9 && "Review your inputs and generate the lesson design"}
+                    {currentStep === 8 && "Review your inputs and generate the lesson design"}
                   </p>
                 </div>
 
@@ -793,51 +826,83 @@ export default function Page() {
                           </div>
                         )}
                       </div>
-                      <div className="pt-4 border-t border-gray-100">
-                        <p className="text-sm font-medium text-gray-800">Difficulty Levels to Include</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Choose which learner profiles you want ideas for. Select at least one level.
-                        </p>
-                        <div className="mt-4 space-y-3">
+                      <div className="pt-4 border-t border-gray-100 grid gap-6 md:grid-cols-2">
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">Difficulty Levels to Include</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Choose which learner profiles you want ideas for. Select at least one level.
+                          </p>
+                          <div className="mt-4 space-y-3">
+                            <label className="flex gap-3 items-start">
+                              <input
+                                type="checkbox"
+                                className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                checked={includeBeginner}
+                                onChange={(e) => setIncludeBeginner(e.target.checked)}
+                              />
+                              <div>
+                                <p className="text-sm font-medium text-gray-800">Beginner (high scaffolding)</p>
+                                <p className="text-xs text-gray-500">
+                                  Concrete modeling, explicit steps, and lots of guidance.
+                                </p>
+                              </div>
+                            </label>
+                            <label className="flex gap-3 items-start">
+                              <input
+                                type="checkbox"
+                                className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                checked={includeIntermediate}
+                                onChange={(e) => setIncludeIntermediate(e.target.checked)}
+                              />
+                              <div>
+                                <p className="text-sm font-medium text-gray-800">Intermediate (balanced guidance)</p>
+                                <p className="text-xs text-gray-500">
+                                  Structured collaboration with room for analysis and application.
+                                </p>
+                              </div>
+                            </label>
+                            <label className="flex gap-3 items-start">
+                              <input
+                                type="checkbox"
+                                className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                                checked={includeAdvanced}
+                                onChange={(e) => setIncludeAdvanced(e.target.checked)}
+                              />
+                              <div>
+                                <p className="text-sm font-medium text-gray-800">Advanced (creative transfer)</p>
+                                <p className="text-xs text-gray-500">
+                                  Open-ended challenges with minimal scaffolds and student ownership.
+                                </p>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                        <div className="space-y-6">
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">Number of Generated Questions</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Controls how many activities per difficulty level are generated.
+                            </p>
+                            <input
+                              type="number"
+                              min={1}
+                              max={10}
+                              value={questionsPerLevel}
+                              onChange={(e) => setQuestionsPerLevel(e.target.value)}
+                              className="mt-4 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
                           <label className="flex gap-3 items-start">
                             <input
                               type="checkbox"
                               className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                              checked={includeBeginner}
-                              onChange={(e) => setIncludeBeginner(e.target.checked)}
+                              checked={includeGeneralIdeas}
+                              onChange={(e) => setIncludeGeneralIdeas(e.target.checked)}
                             />
                             <div>
-                              <p className="text-sm font-medium text-gray-800">Beginner (high scaffolding)</p>
+                              <p className="text-sm font-medium text-gray-800">Include General Lesson Ideas</p>
                               <p className="text-xs text-gray-500">
-                                Concrete modeling, explicit steps, and lots of guidance.
-                              </p>
-                            </div>
-                          </label>
-                          <label className="flex gap-3 items-start">
-                            <input
-                              type="checkbox"
-                              className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                              checked={includeIntermediate}
-                              onChange={(e) => setIncludeIntermediate(e.target.checked)}
-                            />
-                            <div>
-                              <p className="text-sm font-medium text-gray-800">Intermediate (balanced guidance)</p>
-                              <p className="text-xs text-gray-500">
-                                Structured collaboration with room for analysis and application.
-                              </p>
-                            </div>
-                          </label>
-                          <label className="flex gap-3 items-start">
-                            <input
-                              type="checkbox"
-                              className="mt-1 h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                              checked={includeAdvanced}
-                              onChange={(e) => setIncludeAdvanced(e.target.checked)}
-                            />
-                            <div>
-                              <p className="text-sm font-medium text-gray-800">Advanced (creative transfer)</p>
-                              <p className="text-xs text-gray-500">
-                                Open-ended challenges with minimal scaffolds and student ownership.
+                                Adds multi-step projects or extension ideas alongside level-specific activities.
                               </p>
                             </div>
                           </label>
@@ -928,23 +993,42 @@ export default function Page() {
                   )}
 
                   {currentStep === 4 && (
-                    <div>
-                      <label htmlFor="time-available" className="block text-sm font-medium text-gray-700 mb-2">
-                        Time Available
-                      </label>
-                      <select
-                        id="time-available"
-                        value={timeAvailable}
-                        onChange={(e) => setTimeAvailable(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      >
-                        <option value="">Select time...</option>
-                        <option value="45 minutes">45 minutes</option>
-                        <option value="90 minutes">90 minutes</option>
-                        <option value="2-3 hours">2-3 hours</option>
-                        <option value="Full day">Full day</option>
-                        <option value="Multiple sessions">Multiple sessions</option>
-                      </select>
+                    <div className="space-y-4">
+                      <div>
+                        <label htmlFor="time-available" className="block text-sm font-medium text-gray-700 mb-2">
+                          Time Available
+                        </label>
+                        <select
+                          id="time-available"
+                          value={timeAvailable}
+                          onChange={(e) => {
+                            setTimeAvailable(e.target.value);
+                            if (e.target.value !== "custom") {
+                              setCustomTime("");
+                            }
+                          }}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                          <option value="">Select time...</option>
+                          <option value="45 minutes">45 minutes</option>
+                          <option value="90 minutes">90 minutes</option>
+                          <option value="2-3 hours">2-3 hours</option>
+                          <option value="Full day">Full day</option>
+                          <option value="Multiple sessions">Multiple sessions</option>
+                          <option value="custom">Or enter specific time</option>
+                        </select>
+                      </div>
+                      {timeAvailable === "custom" && (
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="Enter custom time (e.g., 75 minutes)"
+                            value={customTime}
+                            onChange={(e) => setCustomTime(e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -997,22 +1081,6 @@ export default function Page() {
                   )}
 
                   {currentStep === 8 && (
-                    <div>
-                      <label htmlFor="teaching-input" className="block text-sm font-medium text-gray-700 mb-2">
-                        Teaching Idea/Input/Content
-                      </label>
-                      <textarea
-                        id="teaching-input"
-                        className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        placeholder="Your initial teaching idea, content, or input for the lesson. This could be a concept you want to cover, an activity idea, or any starting point..."
-                        value={teachingInput}
-                        onChange={(e) => setTeachingInput(e.target.value)}
-                        rows={5}
-                      />
-                    </div>
-                  )}
-
-                  {currentStep === 9 && (
                     <div className="space-y-4">
                       <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
                         <h5 className="font-semibold text-gray-800 mb-3">Review Your Inputs</h5>
@@ -1040,6 +1108,12 @@ export default function Page() {
                             </p>
                           </div>
                           <div>
+                            <strong className="text-gray-700">Include General Lesson Ideas:</strong>
+                            <p className="text-gray-600 mt-1">
+                              {includeGeneralIdeas ? "Yes" : "No"}
+                            </p>
+                          </div>
+                          <div>
                             <strong className="text-gray-700">Learning Objective:</strong>
                             <p className="text-gray-600 mt-1">{learningObjective || "Not specified"}</p>
                           </div>
@@ -1053,7 +1127,7 @@ export default function Page() {
                           </div>
                           <div>
                             <strong className="text-gray-700">Time Available:</strong>
-                            <p className="text-gray-600 mt-1">{timeAvailable || "Not specified"}</p>
+                            <p className="text-gray-600 mt-1">{finalTimeAvailable || "Not specified"}</p>
                           </div>
                           {materialsAvailable && (
                             <div>
@@ -1065,12 +1139,6 @@ export default function Page() {
                             <div>
                               <strong className="text-gray-700">Teaching Ideas:</strong>
                               <p className="text-gray-600 mt-1">{teachingIdeas}</p>
-                            </div>
-                          )}
-                          {teachingInput && (
-                            <div>
-                              <strong className="text-gray-700">Teaching Input:</strong>
-                              <p className="text-gray-600 mt-1">{teachingInput}</p>
                             </div>
                           )}
                         </div>
