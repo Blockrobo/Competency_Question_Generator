@@ -140,7 +140,7 @@ export default function Page() {
   
   // Step-by-step wizard state
   const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 9;
+  const totalSteps = 8;
   const hasSelectedDifficulty = includeBeginner || includeIntermediate || includeAdvanced;
 
   const activeSession = useMemo(() => {
