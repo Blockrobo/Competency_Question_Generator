@@ -8,10 +8,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-white text-gray-900">
       <div className="max-w-6xl mx-auto px-6 py-16 lg:py-24">
         <header className="flex items-center gap-3 mb-12">
-          <Image src="/tekko_logo.png" alt="Tekko logo" width={64} height={64} className="h-16 w-16 object-contain" />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Competency Question Generator</h1>
-          </div>
+          <Image src="/tekko_logo.png" alt="Tekko logo" width={128} height={128} className="h-32 w-32 object-contain" />
         </header>
 
         <section className="grid gap-10 lg:grid-cols-2 items-center">
@@ -22,7 +19,7 @@ export default function HomePage() {
           </div>
             <div className="space-y-4">
               <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
-                Launch tailored lesson ideas in minutes.
+                Future-Ready Lessons. Instantly.
               </h2>
               <p className="text-lg text-gray-600 leading-relaxed">
                 Select your competency, capture classroom context, and let our AI assistant produce scaffolded activities for every learning level—complete with optional project-style lesson ideas.
@@ -45,7 +42,7 @@ export default function HomePage() {
             <ul className="grid gap-3 sm:grid-cols-2 text-sm text-gray-600">
               <li className="flex items-start gap-3">
                 <span className="mt-1 w-2 h-2 rounded-full bg-purple-500" />
-                Guided wizard that captures teaching context with HCAI best practices.
+                Guided wizard that captures teaching context while keeping teachers in control.
               </li>
               <li className="flex items-start gap-3">
                 <span className="mt-1 w-2 h-2 rounded-full bg-purple-500" />
@@ -108,7 +105,7 @@ export default function HomePage() {
         <section id="features" className="mt-20 grid gap-6 md:grid-cols-3">
           {[
             {
-              title: "Guided HCAI workflow",
+              title: "Guided planning workflow",
               body: "Step-by-step wizard captures only the data you need and keeps teachers in control of every decision.",
             },
             {

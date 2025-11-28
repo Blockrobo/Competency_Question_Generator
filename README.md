@@ -1,4 +1,4 @@
-# Competency Question Generator
+# Tekko Lecture Design Assistant
 
 A Next.js application for teachers to generate personalized, competency-based question sets for students using AI. The application follows Google PAIR HCAI (Human-Centered AI) principles to ensure responsible and transparent AI interactions.
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChatTurn, LessonDesign, ChatSession } from "@/types/questions";
@@ -506,11 +507,13 @@ function PageContent() {
         </button>
         {/* App Name Header */}
         <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-center">
-          <img
-            src="/tekko_logo.png"
-            alt="Tekko logo"
-            className="h-20 w-auto object-contain transition-all duration-300"
-          />
+          <Link href="/" className="inline-flex" aria-label="Go to Tekko home">
+            <img
+              src="/tekko_logo.png"
+              alt="Tekko logo"
+              className="h-20 w-auto object-contain transition-all duration-300"
+            />
+          </Link>
         </div>
         
         {/* History Section */}

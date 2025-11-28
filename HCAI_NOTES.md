@@ -1,6 +1,6 @@
 # HCAI Implementation Notes
 
-This document maps Google PAIR HCAI patterns to UI elements and code paths in the Competency Question Generator application.
+This document maps Google PAIR HCAI patterns to UI elements and code paths in the Tekko Lecture Design Assistant application.
 
 ## Pattern → UI/Code Mapping
 
