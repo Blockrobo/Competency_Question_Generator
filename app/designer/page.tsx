@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { ChatTurn, LessonDesign, ChatSession } from "@/types/questions";
 import HelpAbout from "@/components/HelpAbout";
 import ErrorDisplay from "@/components/ErrorDisplay";
@@ -106,8 +104,7 @@ const demoSession: ChatSession = {
   originalDesigns: [demoLessonDesign],
 };
 
-function PageContent() {
-  const searchParams = useSearchParams();
+export default function Page() {
   // Chat sessions
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -131,6 +128,7 @@ function PageContent() {
   const [includeGeneralIdeas, setIncludeGeneralIdeas] = useState(true);
   const [questionsPerLevel, setQuestionsPerLevel] = useState("3");
   const [hasLoadedDemo, setHasLoadedDemo] = useState(false);
+  const hasProcessedNewParam = useRef(false);
 
   const [refine, setRefine] = useState("");
   const [loading, setLoading] = useState(false);
@@ -192,15 +190,13 @@ function PageContent() {
     refinementRequest?: string
   ): Promise<LessonDesign | null> {
     try {
-        /*
-        Frontend <-> Backend contract:
-        - Base URL comes from NEXT_PUBLIC_LEGACY_BACKEND_URL (defaults to local Flask on :4000).
-        - This POST hits /api/generate_worksheet in Backend_Prompt/src/api_server.py.
-        - Payload keys mirror the Python TeacherConfig fields expected by the backend.
-        - Response is JSON with { activities, lesson_ideas, competency_id, learning_objective },
-        which we normalize into LessonDesign + sticky notes for the canvas.
-        - Non-2xx responses are treated as backend errors and surfaced in lastError.
-        */
+      // Frontend <-> Backend contract:
+      // - Base URL comes from NEXT_PUBLIC_LEGACY_BACKEND_URL (defaults to local Flask on :4000).
+      // - This POST hits /api/generate_worksheet in Backend_Prompt/src/api_server.py.
+      // - Payload keys mirror the Python TeacherConfig fields expected by the backend.
+      // - Response is JSON with { activities, lesson_ideas, competency_id, learning_objective },
+      //   which we normalize into LessonDesign + sticky notes for the canvas.
+      // - Non-2xx responses are treated as backend errors and surfaced in lastError.
       const legacyBackendUrl = process.env.NEXT_PUBLIC_LEGACY_BACKEND_URL || "http://localhost:4000";
       const refineNote = refinementRequest?.trim()
         ? `Teacher refinement request: ${refinementRequest.trim()}`
@@ -497,10 +493,19 @@ function PageContent() {
   }, [hasLoadedDemo, sessions.length]);
 
   useEffect(() => {
-    if (searchParams?.get("new") === "1") {
+    if (hasProcessedNewParam.current) return;
+    if (typeof window === "undefined") return;
+    if (!window.location.pathname.startsWith("/designer")) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") === "1") {
+      hasProcessedNewParam.current = true;
       startNewChat();
+      params.delete("new");
+      const query = params.toString();
+      const nextUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+      window.history.replaceState({}, "", nextUrl);
     }
-  }, [searchParams]);
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -522,13 +527,11 @@ function PageContent() {
         </button>
         {/* App Name Header */}
         <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-center">
-          <Link href="/" className="inline-flex" aria-label="Go to Tekko home">
-            <img
-              src="/tekko_logo.png"
-              alt="Tekko logo"
-              className="h-20 w-auto object-contain transition-all duration-300"
-            />
-          </Link>
+          <img
+            src="/tekko_logo.png"
+            alt="Tekko logo"
+            className="h-20 w-auto object-contain transition-all duration-300"
+          />
         </div>
         
         {/* History Section */}
@@ -1211,17 +1214,5 @@ function PageContent() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={
-      <div className="flex h-screen bg-gray-50 items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    }>
-      <PageContent />
-    </Suspense>
   );
 }

@@ -11,13 +11,22 @@ from worksheet_backend import (
 MODEL = os.getenv("MODEL", os.getenv("OPENAI_MODEL", "gpt-4.1-mini"))
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)  # Enable CORS for all routes.
 
 
+# Frontend <-> Backend contract:
+# - Called by Next.js pages in app/design/page.tsx and app/designer/page.tsx.
+# - Base URL is driven by NEXT_PUBLIC_LEGACY_BACKEND_URL on the frontend.
+# - Expects JSON payload shaped like TeacherConfig; returns activities and lesson_ideas.
+# - Response is normalized client-side into LessonDesign + sticky notes for the canvas.
 @app.route("/api/generate_worksheet", methods=["POST"])
 def generate_worksheet():
     """
     API endpoint to generate worksheet
+
+    This route is called by the Next.js frontend pages:
+    - app/design/page.tsx
+    - app/designer/page.tsx
 
     Expected JSON body:
     {
@@ -33,11 +42,20 @@ def generate_worksheet():
         "include_advanced": true,
         "include_lesson_ideas": true
     }
+
+    Response:
+    {
+        "competency_id": "MI_MEDIEN_1_A",
+        "learning_objective": "...",
+        "activities": [ ... ],
+        "lesson_ideas": [ ... ] | null
+    }
     """
     try:
+        # Parse incoming JSON payload.
         data = request.json
 
-        # Create config from API request
+        # Map request fields into a config object used by prompt builders.
         config = TeacherConfig()
         config.competency_id = data.get("competency_id")
         config.subject = data.get("subject")
@@ -55,7 +73,7 @@ def generate_worksheet():
         config.include_lesson_ideas = data.get("include_lesson_ideas", False)
         config.class_composition = data.get("class_composition", "")
 
-        # Validate required fields
+        # Guard against missing required inputs before calling the model.
         if not config.competency_id or not config.learning_objective:
             return (
                 jsonify(
@@ -66,7 +84,7 @@ def generate_worksheet():
                 400,
             )
 
-        # Determine difficulty levels
+        # Build the list of difficulty levels to generate.
         difficulty_levels = []
         if config.include_beginner:
             difficulty_levels.append("beginner")
@@ -75,7 +93,7 @@ def generate_worksheet():
         if config.include_advanced:
             difficulty_levels.append("advanced")
 
-        # Generate worksheet
+        # Prepare the response payload; activities will be appended below.
         worksheet = {
             "competency_id": config.competency_id,
             "learning_objective": config.learning_objective,
@@ -83,12 +101,13 @@ def generate_worksheet():
             "lesson_ideas": None,
         }
 
-        # Generate for each difficulty level
+        # Call the LLM per difficulty level and normalize the response.
         for difficulty in difficulty_levels:
             system_prompt = build_system_prompt(config, difficulty)
 
             user_prompt = f"Generate {config.num_questions_per_level} activities for the {difficulty} level."
 
+            # Standard chat format expected by the OpenAI SDK.
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -100,7 +119,7 @@ def generate_worksheet():
 
             worksheet["activities"].extend(structured_activities)
 
-        # Generate lesson ideas if requested
+        # Optional second pass to generate lesson ideas as JSON.
         if config.include_lesson_ideas:
             lesson_prompt = f"""
 Based on the following context, generate 3-5 creative lesson ideas.
@@ -120,6 +139,7 @@ Structure your ideas as an array of JSON objects, each with:
 **IMPORTANT:** Your entire response must be a single, valid JSON array. Do not include any introductory text, explanations, or markdown formatting. The response should start with `[` and end with `]`.
 """
 
+            # Use a specialized system prompt for lesson ideas.
             messages = [
                 {
                     "role": "system",
@@ -135,6 +155,7 @@ Structure your ideas as an array of JSON objects, each with:
         return jsonify(worksheet), 200
 
     except Exception as e:
+        # Return a safe error payload for unexpected failures.
         return jsonify({"error": str(e)}), 500
 
 
@@ -152,6 +173,7 @@ def get_cycles():
         ]
     }
     """
+    # Static list used by the frontend selector.
     cycles = [
         {"id": "1", "name": "Cycle 1 (Kindergarten-Grade 2)"},
         {"id": "2", "name": "Cycle 2 (Grades 3-6)"},
@@ -173,6 +195,7 @@ def get_subjects():
         ]
     }
     """
+    # Static list used by the frontend selector.
     subjects = [
         {"id": "media", "name": "Media"},
         {"id": "informatics", "name": "Informatics"},
@@ -200,6 +223,7 @@ def get_all_competencies():
     """
     from curriculum_topics import COMPETENCIES
 
+    # Flatten the competency map into a list for the client.
     return (
         jsonify(
             {
@@ -245,9 +269,10 @@ def get_competencies_by_cycle(cycle_id):
     """
     from curriculum_topics import COMPETENCIES
 
+    # Optional query string filter like ?subject=media.
     subject_filter = request.args.get("subject", None)
 
-    # Filter competencies by cycle
+    # Filter competencies by the path cycle_id.
     filtered_competencies = [
         {
             "id": comp_id,
@@ -259,7 +284,7 @@ def get_competencies_by_cycle(cycle_id):
         if cycle_id in comp.get("cycles", [])
     ]
 
-    # Optionally filter by subject
+    # Optionally narrow results by subject domain.
     if subject_filter:
         filtered_competencies = [
             c for c in filtered_competencies if c["domain"] == subject_filter
@@ -287,11 +312,13 @@ def get_competency_details(competency_id):
     """
     from curriculum_topics import COMPETENCIES
 
+    # Return 404 if the requested ID is unknown.
     if competency_id not in COMPETENCIES:
         return jsonify({"error": "Competency not found"}), 404
 
     comp = COMPETENCIES[competency_id]
 
+    # Shape the response with only the fields needed by the client.
     return (
         jsonify(
             {
@@ -318,10 +345,12 @@ def health_check():
         "model": "llama3.2"
     }
     """
+    # Surface basic service metadata for monitoring.
     return jsonify({"status": "healthy", "version": "1.0", "model": MODEL}), 200
 
 
 if __name__ == "__main__":
+    # Console banner for local development.
     print("=" * 60)
     print("🚀 Lehrplan 21 Worksheet Generator API")
     print("=" * 60)
