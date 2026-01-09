@@ -1,0 +1,160 @@
+{
+  "subject": "Media",
+  "cycle": "Cycle 2 (Grades 3-6)",
+  "topic": "MI_MEDIEN_3 - Media Production and Publishing - Pupils can transform ideas, opinions, experiences and knowledge into media contributions and publish them, considering laws, rules, and values.",
+  "competency_id": "MI_MEDIEN_3",
+  "learning_objective": "What the material is",
+  "class_context": {
+    "materials_available": "Nothing",
+    "time_available": "30",
+    "teaching_ideas": "be gentle, fun and playful",
+    "class_size_composition": "20 students, mixed ability",
+    "other_notes": "Nothing"
+  },
+  "activities": [
+    {
+      "title": "Media Content Template",
+      "difficulty_level": "beginner",
+      "estimated_duration": 10,
+      "materials_needed": [],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Students fill out a template to create their own media content. The teacher provides explicit guidance and examples, using high scaffolding."
+    },
+    {
+      "title": "Media Production Example Walkthrough",
+      "difficulty_level": "beginner",
+      "estimated_duration": 15,
+      "materials_needed": [],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "The teacher provides a worked example of media production, explaining each step clearly. Students then repeat the process with different data."
+    },
+    {
+      "title": "Media Definition Matching",
+      "difficulty_level": "beginner",
+      "estimated_duration": 8,
+      "materials_needed": [],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Students match media vocabulary to definitions, using explicit prompts and a well-defined problem space. The teacher provides guidance and support as needed."
+    },
+    {
+      "title": "Media Production Planning",
+      "difficulty_level": "intermediate",
+      "estimated_duration": 20,
+      "materials_needed": [],
+      "min_number_students": 4,
+      "max_number_students": 12,
+      "description": "Students will work in pairs to plan a short video project using a given scenario. They will use a media production planning framework to guide their thinking and apply concepts learned from the beginner level. The goal is to encourage critical thinking, analysis, and creative problem-solving while producing a rough outline of their project."
+    },
+    {
+      "title": "Pros and Cons of Different Media Formats",
+      "difficulty_level": "intermediate",
+      "estimated_duration": 15,
+      "materials_needed": [],
+      "min_number_students": 6,
+      "max_number_students": 10,
+      "description": "Students will analyze different media formats (e.g., video, audio, image) and consider their pros and cons in a given context. Guiding questions will be provided to prompt analysis and discussion. The goal is to help students develop critical thinking skills, evaluate information, and make informed decisions about media production."
+    },
+    {
+      "title": "Media Concept Application",
+      "difficulty_level": "intermediate",
+      "estimated_duration": 25,
+      "materials_needed": [],
+      "min_number_students": 8,
+      "max_number_students": 15,
+      "description": "Students will apply a known media concept (e.g., storytelling, pacing) to a new but similar situation. They will work individually and use a guiding question to prompt their thinking. The goal is to reinforce understanding of key concepts and encourage creative problem-solving."
+    },
+    {
+      "title": "Multimedia Pitch",
+      "difficulty_level": "advanced",
+      "estimated_duration": 30,
+      "materials_needed": [
+        "Computer with multimedia editing software",
+        "Whiteboard or presentation software"
+      ],
+      "min_number_students": 2,
+      "max_number_students": 10,
+      "description": "Students will work individually to create a multimedia pitch for a real-world issue or problem. They must consider multiple perspectives, evaluate evidence, and synthesize their own solution. The pitch should include visual elements, audio, and text. Students will present their pitches to the class and receive feedback."
+    },
+    {
+      "title": "Media Critique",
+      "difficulty_level": "advanced",
+      "estimated_duration": 45,
+      "materials_needed": [
+        "Videos or podcasts with varying perspectives on a complex issue",
+        "Whiteboard or presentation software"
+      ],
+      "min_number_students": 4,
+      "max_number_students": 12,
+      "description": "Students will watch multiple videos or listen to different podcasts that present various perspectives on a complex issue. They must evaluate the evidence presented, identify biases and assumptions, and synthesize their own opinion on the topic. Students will then present their findings to the class and engage in a critical discussion."
+    },
+    {
+      "title": "Design a Media Campaign",
+      "difficulty_level": "advanced",
+      "estimated_duration": 60,
+      "materials_needed": [
+        "Computer with design software",
+        "Paper or digital drawing tools"
+      ],
+      "min_number_students": 3,
+      "max_number_students": 15,
+      "description": "Students will work individually to design a media campaign for a real-world issue or problem. They must consider multiple perspectives, evaluate evidence, and synthesize their own message. The campaign should include visual elements, audio, and text. Students will present their designs to the class and receive feedback."
+    }
+  ],
+  "lesson_ideas": [
+    {
+      "title": "Media Literacy Mapping",
+      "learning_objectives": [
+        "Understand the concept of media literacy",
+        "Identify different types of media"
+      ],
+      "activity_description": "Divide students into small groups and provide a large sheet of paper or whiteboard with different categories (e.g., print, digital, visual). Ask each group to create a map of how various types of media intersect and overlap. Encourage them to use examples from their daily lives to illustrate their points.",
+      "materials_needed": [
+        "Blank paper or whiteboard",
+        "Markers or colored pencils"
+      ],
+      "estimated_duration": 45
+    },
+    {
+      "title": "Media Representation Analysis",
+      "learning_objectives": [
+        "Analyze media representation of diverse groups",
+        "Recognize biases in media"
+      ],
+      "activity_description": "Show students a selection of media (e.g., movies, TV shows, advertisements) that feature different cultural or social groups. Ask them to analyze the representation and identify any biases or stereotypes. Discuss as a class how these representations reflect (or fail to reflect) the diversity of society.",
+      "materials_needed": [
+        "Selected media",
+        "Whiteboard or presentation software"
+      ],
+      "estimated_duration": 60
+    },
+    {
+      "title": "Create-a-Media Campaign",
+      "learning_objectives": [
+        "Develop critical thinking about media messages",
+        "Design a media campaign for social change"
+      ],
+      "activity_description": "Divide students into groups and ask them to design a media campaign for a social issue they care about (e.g., environmentalism, equality). Encourage them to think critically about the messages in their chosen media and how it can be used effectively for social change.",
+      "materials_needed": [
+        "Blank paper or laptops",
+        "Markers or pens"
+      ],
+      "estimated_duration": 90
+    },
+    {
+      "title": "Debating Media Influences",
+      "learning_objectives": [
+        "Evaluate the impact of media on personal behavior",
+        "Develop argumentation skills for media debates"
+      ],
+      "activity_description": "Organize a class debate on the influence of media on personal behavior (e.g., peer pressure, consumerism). Assign students different perspectives to take and ask them to prepare arguments. Encourage respectful discussion and critical thinking.",
+      "materials_needed": [
+        "Lectures or articles on media influences",
+        "Whiteboard or presentation software"
+      ],
+      "estimated_duration": 75
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "Beginner": {
+    "description": "Needs concrete, guided tasks and frequent support. Benefits from high scaffolding such as explicit instructions, templates, and step-by-step procedures. Goal is recognition, recall, and basic skill building.",
+    "example_activities": [
+      "Fill out worksheets with clear instructions",
+      "Follow simple how-to guides",
+      "Complete partially worked examples focusing on safe online behaviour",
+      "Use a basic digital tool for the first time"
+    ]
+  },
+  "Intermediate": {
+    "description": "Can apply and modify ideas using frameworks. Benefits from moderate scaffolding through guiding questions or templates. Focus is on applying knowledge and developing reasoning skills.",
+    "example_activities": [
+      "Improve a provided template for digital collaboration",
+      "Explain the rationale behind chosen approaches",
+      "Give structured peer feedback"
+    ]
+  },
+  "Advanced": {
+    "description": "Works independently, creates solutions or projects, and reflects critically. Receives minimal scaffolding and more autonomy. Expected to self-evaluate, justify decisions, and reflect on outcomes.",
+    "example_activities": [
+      "Design and manage a collaborative online project",
+      "Develop digital communication guidelines for the class",
+      "Conduct independent reflection on project outcomes"
+    ]
+  }
+}

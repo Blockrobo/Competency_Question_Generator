@@ -1,0 +1,159 @@
+{
+  "subject": "Media",
+  "cycle": "Cycle 2 (Grades 3-6)",
+  "topic": "MI_MEDIEN_3 - Media Production and Publishing - Pupils can transform ideas, opinions, experiences and knowledge into media contributions and publish them, considering laws, rules, and values.",
+  "competency_id": "MI_MEDIEN_3",
+  "learning_objective": "What material is",
+  "class_context": {
+    "materials_available": "Nothing",
+    "time_available": "30",
+    "teaching_ideas": "be gentle, fun and playful",
+    "class_size_composition": "20 students, mixed ability",
+    "other_notes": "nothing"
+  },
+  "activities": [
+    {
+      "title": "Media Definition Matching",
+      "difficulty_level": "beginner",
+      "estimated_duration": 10,
+      "materials_needed": [],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Match the media type definitions with their corresponding descriptions. This activity focuses on recall and recognition of media concepts."
+    },
+    {
+      "title": "Media Type Sorting",
+      "difficulty_level": "beginner",
+      "estimated_duration": 15,
+      "materials_needed": [],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Sort the given media types into categories (e.g., audio-visual, print). Students use explicit prompts and work within a well-defined problem space."
+    },
+    {
+      "title": "Media Example Description",
+      "difficulty_level": "beginner",
+      "estimated_duration": 12,
+      "materials_needed": [
+        "Whiteboard or presentation software"
+      ],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Provide a media example (e.g., image, video) and ask students to describe it in their own words. This activity focuses on simple comprehension and explicit teaching of prior knowledge."
+    },
+    {
+      "title": "Media Definition Sorting",
+      "difficulty_level": "intermediate",
+      "estimated_duration": 15,
+      "materials_needed": [],
+      "min_number_students": 4,
+      "max_number_students": 20,
+      "description": "Students will be given a set of media-related terms and need to categorize them into different groups (e.g. medium, format, genre). This activity helps students develop their understanding of what material is by analyzing the relationships between different concepts."
+    },
+    {
+      "title": "Media Description",
+      "difficulty_level": "intermediate",
+      "estimated_duration": 20,
+      "materials_needed": [
+        "whiteboard/marker"
+      ],
+      "min_number_students": 2,
+      "max_number_students": 20,
+      "description": "Students will choose a media example (e.g. book, movie, music) and describe its characteristics to the class. The teacher will guide the discussion with questions like 'What type of material is this?' or 'How would you categorize this?' This activity encourages students to think critically about what makes one material different from another."
+    },
+    {
+      "title": "Media Classification",
+      "difficulty_level": "intermediate",
+      "estimated_duration": 25,
+      "materials_needed": [
+        "handouts with examples of media"
+      ],
+      "min_number_students": 4,
+      "max_number_students": 20,
+      "description": "Students will be given a set of media examples and asked to categorize them into different genres (e.g. fiction, non-fiction, documentary). The teacher will provide guiding questions like 'How does this media example relate to others in the same genre?' This activity helps students develop their understanding of what makes one material distinct from another within its category."
+    },
+    {
+      "title": "Material Definition Mapping",
+      "difficulty_level": "advanced",
+      "estimated_duration": 30,
+      "materials_needed": [],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Students are presented with a blank diagram and asked to map concepts related to 'material' from the Lehrplan 21 competency. They should define their own approach and identify connections between concepts. The teacher provides no guidance, encouraging students to take ownership of their problem-solving process. Expected outcomes include a well-structured and thoughtfully connected concept map."
+    },
+    {
+      "title": "Material Evaluation Case Study",
+      "difficulty_level": "advanced",
+      "estimated_duration": 30,
+      "materials_needed": [],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Students are given a case study related to 'material' from the Lehrplan 21 competency and asked to evaluate its relevance, accuracy, and completeness. They should provide their own evaluation framework and justify their conclusions. The teacher does not offer guidance, instead, encouraging students to think critically and independently."
+    },
+    {
+      "title": "Material Synthesis Collage",
+      "difficulty_level": "advanced",
+      "estimated_duration": 30,
+      "materials_needed": [
+        "Paper",
+        "Scissors",
+        "Glue"
+      ],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Students are given a variety of materials and asked to create a visual representation of their understanding of 'material' from the Lehrplan 21 competency. They should synthesize multiple concepts into a cohesive and well-structured artwork. The teacher provides no guidance, instead, encouraging students to take ownership of their creative process."
+    }
+  ],
+  "lesson_ideas": [
+    {
+      "title": "Media Criticism Charades",
+      "learning_objectives": [
+        "Identify different types of media",
+        "Analyze media messages",
+        "Develop critical thinking skills"
+      ],
+      "activity_description": "Divide students into two teams. Write different types of media (e.g., newspaper, social media, advertisement) on slips of paper and put them in a hat. Each team takes turns drawing a slip of paper and acting out the type of media without speaking. The opposing team has to guess the type of media. After several rounds, have students discuss in small groups which media they think is most influential and why.",
+      "materials_needed": [],
+      "estimated_duration": 45
+    },
+    {
+      "title": "Media Representation Mural",
+      "learning_objectives": [
+        "Identify representations in media",
+        "Analyze diversity in media",
+        "Develop visual literacy skills"
+      ],
+      "activity_description": "Have students work in groups to create a large mural representing different types of media (e.g., news, entertainment, education). Ask them to consider what types of people and cultures are represented in each type of media. Have students share their observations and insights with the class.",
+      "materials_needed": [
+        "Large piece of paper or whiteboard"
+      ],
+      "estimated_duration": 60
+    },
+    {
+      "title": "Media Messages Simulation",
+      "learning_objectives": [
+        "Identify messages in media",
+        "Analyze persuasive techniques",
+        "Develop critical thinking skills"
+      ],
+      "activity_description": "Divide students into small groups and assign each group a scenario (e.g., advertising a new product, promoting a social cause). Ask them to create a short skit or presentation that represents the message of their assigned scenario. After several rounds, have students discuss in small groups which messages they think were most persuasive and why.",
+      "materials_needed": [
+        "Blank paper and pencils"
+      ],
+      "estimated_duration": 45
+    },
+    {
+      "title": "Media Literacy Scavenger Hunt",
+      "learning_objectives": [
+        "Identify representations in media",
+        "Analyze diversity in media",
+        "Develop visual literacy skills"
+      ],
+      "activity_description": "Create a list of clues related to different types of media (e.g., 'Find an advertisement that targets a specific age group'). Have students work individually or in pairs to find and analyze examples of each type of media on school posters, websites, or social media.",
+      "materials_needed": [
+        "Blank paper and pencils"
+      ],
+      "estimated_duration": 30
+    }
+  ]
+}

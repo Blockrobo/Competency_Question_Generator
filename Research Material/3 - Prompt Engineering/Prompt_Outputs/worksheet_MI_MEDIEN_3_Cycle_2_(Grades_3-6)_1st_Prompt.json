@@ -1,0 +1,163 @@
+{
+  "subject": "Media",
+  "cycle": "Cycle 2 (Grades 3-6)",
+  "topic": "MI_MEDIEN_3 - Media Production and Publishing - Pupils can transform ideas, opinions, experiences and knowledge into media contributions and publish them, considering laws, rules, and values.",
+  "competency_id": "MI_MEDIEN_3",
+  "learning_objective": "What the material is",
+  "class_context": {
+    "materials_available": "Nothing",
+    "time_available": "30",
+    "teaching_ideas": "be gentle, fun and playful",
+    "class_size_composition": "20 students, mixed ability",
+    "other_notes": "nothing"
+  },
+  "activities": [
+    {
+      "title": "Media Concept Template",
+      "difficulty_level": "beginner",
+      "estimated_duration": 20,
+      "materials_needed": [
+        "blank paper",
+        "pencil"
+      ],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Provide a template for students to fill out with key elements of their media concept, such as title, description, and target audience. Explicitly teach the purpose and structure of each element before having students complete it."
+    },
+    {
+      "title": "Worked Example: Creating a Media Script",
+      "difficulty_level": "beginner",
+      "estimated_duration": 30,
+      "materials_needed": [
+        "whiteboard",
+        "markers"
+      ],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Show students a worked example of creating a media script, step by step. Use clear and concise language to explain each action and provide visual aids as needed. Have students repeat the process with different data."
+    },
+    {
+      "title": "Media Vocabulary Match",
+      "difficulty_level": "beginner",
+      "estimated_duration": 15,
+      "materials_needed": [
+        "printout of vocabulary terms",
+        "matching exercise template"
+      ],
+      "min_number_students": 1,
+      "max_number_students": 20,
+      "description": "Create a matching exercise where students match media-related vocabulary to their definitions. Use explicit language and provide multiple choices for each term. Allow time for students to complete the activity independently."
+    },
+    {
+      "title": "Media Script Development",
+      "difficulty_level": "Intermediate",
+      "estimated_duration": 45,
+      "materials_needed": [
+        "Blank paper and pencils",
+        "Prepared script outline"
+      ],
+      "min_number_students": 10,
+      "max_number_students": 20,
+      "description": "Provide students with a prepared script outline and ask them to develop their own media script. Encourage them to consider laws, rules, and values while working on the script. Once they have finished, review the scripts as a group and discuss any notable aspects or challenges."
+    },
+    {
+      "title": "Peer Review and Feedback",
+      "difficulty_level": "Intermediate",
+      "estimated_duration": 60,
+      "materials_needed": [
+        "Prepared media samples",
+        "Feedback forms"
+      ],
+      "min_number_students": 12,
+      "max_number_students": 20,
+      "description": "Prepare several media samples (e.g. videos, images) and ask students to review them in groups. Provide a feedback form with guiding questions such as 'What are the strengths and weaknesses of this media contribution?' or 'How could the creator improve this piece?' Students should then present their feedback to the group and discuss any notable points."
+    },
+    {
+      "title": "Media Publishing Ethics",
+      "difficulty_level": "Intermediate",
+      "estimated_duration": 90,
+      "materials_needed": [
+        "Real-life media samples",
+        "Whiteboard or presentation software"
+      ],
+      "min_number_students": 10,
+      "max_number_students": 20,
+      "description": "Show students real-life examples of media publications (e.g. news articles, advertisements) and ask them to analyze the laws, rules, and values presented in these pieces. How do they consider issues like copyright, bias, or fairness? Encourage students to discuss their thoughts in small groups and then share their findings as a whole class."
+    },
+    {
+      "title": "Debate on Digital Footprint",
+      "difficulty_level": "Advanced",
+      "estimated_duration": "2-3 class periods",
+      "materials_needed": "Whiteboard, markers, internet access, laptops/tablets (optional)",
+      "min_number_students": 16,
+      "max_number_students": 20,
+      "description": "Assign a current event or issue related to digital footprint and have students form groups to debate different perspectives on the topic. Encourage them to research and evaluate multiple sources to justify their arguments."
+    },
+    {
+      "title": "Media Criticism Project",
+      "difficulty_level": "Advanced",
+      "estimated_duration": "3-4 class periods",
+      "materials_needed": "Sample media articles or videos, laptops/tablets, online resources (e.g. Wikipedia, academic journals)",
+      "min_number_students": 16,
+      "max_number_students": 20,
+      "description": "Assign a selection of media articles or videos on a specific topic and ask students to critically evaluate the content, identifying biases, sources, and persuasive techniques used. Students should then create an original written piece (e.g. blog post, essay) explaining their critique."
+    },
+    {
+      "title": "Innovation Challenge: Social Media Campaign",
+      "difficulty_level": "Advanced",
+      "estimated_duration": "2-3 class periods",
+      "materials_needed": "Laptops/tablets, internet access, social media platforms (optional)",
+      "min_number_students": 16,
+      "max_number_students": 20,
+      "description": "Assign a real-world problem or issue related to social media and challenge students to create an innovative solution. Students should develop a comprehensive campaign plan, considering laws, rules, and values. They will then present their ideas in small groups."
+    }
+  ],
+  "lesson_ideas": [
+    {
+      "title": "Media Literacy Scavenger Hunt",
+      "learning_objectives": [
+        "Identify different media formats",
+        "Analyze media messages"
+      ],
+      "activity_description": "Divide students into small groups and give each group a list of media examples (e.g. videos, images, articles). Ask them to find and identify the different media formats in the school or nearby areas. After that, ask them to analyze the media messages and discuss what they can infer about the sender's intentions.",
+      "materials_needed": [],
+      "estimated_duration": 45
+    },
+    {
+      "title": "Create a Fake News Story",
+      "learning_objectives": [
+        "Understand how to critically evaluate news sources",
+        "Identify biases in media"
+      ],
+      "activity_description": "Assign students a topic and ask them to create a fake news story. Then, divide the class into small groups and ask each group to discuss and analyze the fake news story from different perspectives (e.g. journalist's point of view, reader's point of view).",
+      "materials_needed": [
+        "Whiteboard or chalkboard",
+        "Markers"
+      ],
+      "estimated_duration": 60
+    },
+    {
+      "title": "Media Portrayal Project",
+      "learning_objectives": [
+        "Understand how to critically evaluate media portrayals",
+        "Identify stereotypes in media"
+      ],
+      "activity_description": "Ask students to choose a movie, TV show or book and analyze the portrayal of certain characters or groups. Then, ask them to create a visual representation (e.g. poster, infographic) that highlights the biases or stereotypes present in the portrayal.",
+      "materials_needed": [
+        "Poster board",
+        "Markers"
+      ],
+      "estimated_duration": 90
+    },
+    {
+      "title": "Debate: Media Influence",
+      "learning_objectives": [
+        "Understand how media influences our perceptions",
+        "Identify personal biases in media consumption"
+      ],
+      "activity_description": "Assign students different perspectives on the influence of media on society (e.g. media as a tool for social change, media as a source of misinformation). Ask them to prepare arguments and then hold a debate.",
+      "materials_needed": [],
+      "estimated_duration": 90
+    }
+  ]
+}

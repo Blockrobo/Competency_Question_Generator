@@ -1,0 +1,34 @@
+{
+    "levels": {
+        "beginner": {
+            "name": "Beginner",
+            "description": "Needs concrete, guided tasks; frequent support.",
+            "example_activities": [
+                "Follow explicit instructions to create a basic blog post.",
+                "Identify safe online behaviours using a worksheet.",
+                "Fill in missing steps in a worked example."
+            ],
+            "guidance": "Use high scaffolding, step-by-step instructions, focus on recognition/recall."
+        },
+        "intermediate": {
+            "name": "Intermediate",
+            "description": "Can apply/modify ideas, work from frameworks.",
+            "example_activities": [
+                "Improve a provided template for online collaboration.",
+                "Explain reasons for their chosen online communication approach.",
+                "Participate in a peer-feedback activity with a checklist."
+            ],
+            "guidance": "Offer frameworks, guiding questions, challenge with moderate independence."
+        },
+        "advanced": {
+            "name": "Advanced",
+            "description": "Works independently, creates solutions/projects, reflects critically.",
+            "example_activities": [
+                "Design and manage a group online project from scratch.",
+                "Evaluate effectiveness of different online platforms for collaboration.",
+                "Draft a policy for responsible digital communication."
+            ],
+            "guidance": "Set open-ended, project-based tasks; minimal scaffolding; expect self-evaluation and justification."
+        }
+    }
+}
